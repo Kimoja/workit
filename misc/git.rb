@@ -26,7 +26,12 @@ end
 
 def git_commit(message)
   log "Creating commit..."
-  system("git add . && git commit --allow-empty -m '#{message}'") || raise('Failed to create commit')
+  system("git add . && git commit -m '#{message}'") || raise('Failed to create commit')
+end
+
+def git_empty_commit(message)
+  log "Creating empty commit..."
+  system("git commit --allow-empty -m '#{message}'") || raise('Failed to create commit')
 end
 
 def git_commit_if_changes(message = "WIP autocommit")

@@ -4,6 +4,7 @@ class CreateGitBranchService
     @jira_ticket = jira_ticket
     @jira_client = jira_client
     @github_client = github_client
+    @with_ticket = jira_ticket
   end
 
   def call
@@ -12,39 +13,12 @@ class CreateGitBranchService
     git_navigate_to_repo!
     git_commit_if_changes
     git_switch_to_main_branch
-
-    github_repo = git_get_github_repo_info
-
-    if @branch_name
-      branch_name = @branch_name
-      commit_message = create_commit_message_from_branch_name
-      issue_type = get_issue_type_from_branch_name
-      description = commit_message
-      ticket_key = nil
-      jira_link = nil
-    else
-      ticket = fetch_jira_ticket
-      branch_name = create_branch_name_from_ticket(ticket)
-      commit_message = create_commit_message_from_ticket(ticket)
-      issue_type = ticket.issue_type
-      ticket_key = ticket.key
-      description = ticket.description
-      jira_link = ticket.url
-    end
     binding.pry 
-    raise 
+    raise
     git_create_branch(branch_name, ask_if_exists: true)
-    create_empty_commit(commit_message)
+    git_empty_commit(commit_message)
     git_push_branch
-    
-    pr_url = create_pull_request(
-      github_repo:, 
-      title: commit_message, 
-      issue_type:, 
-      ticket_key:, 
-      jira_link:, 
-      description:
-    )
+    pr_url = create_pull_request
     
     open_browser(pr_url)
   end
@@ -58,13 +32,31 @@ class CreateGitBranchService
     log ""
   end
 
-  def fetch_jira_ticket
-    puts "Fetching Jira ticket: #{@jira_ticket}"
-
-    @jira_client.fetch_ticket(@jira_ticket)
+  def ticket 
+    @ticket ||= @with_ticket ? fetch_jira_ticket : nil
   end
 
-  def create_branch_name_from_ticket(ticket)
+  def branch_name
+    @branch_name ||= @with_ticket ? create_branch_name_from_ticket : raise("Branch name is required")
+  end
+
+  def commit_message
+    @commit_message ||= @with_ticket ? create_commit_message_from_ticket : create_commit_message_from_branch_name
+  end
+
+  def description
+    @description ||= @with_ticket ? ticket.description : commit_message
+  end
+
+  def github_repo_info
+    @github_repo_info ||= git_get_github_repo_info
+  end
+
+  def issue_type
+    @issue_type ||=  @with_ticket ? ticket.issue_type : get_issue_type_from_branch_name
+  end
+
+  def create_branch_name_from_ticket
     prefix = ticket.issue_type == 'bug' ? 'fix/' : 'feat/'
     branch_suffix = ticket.title
       .downcase
@@ -74,9 +66,15 @@ class CreateGitBranchService
     
     branch_name = "#{prefix}#{branch_suffix}"
 
-    puts "Creating branch: #{branch_name}"
+    log "Creating branch: #{branch_name}"
 
     branch_name
+  end
+
+  def fetch_jira_ticket
+    log "Fetching Jira ticket: #{@jira_ticket}"
+
+    @jira_client.fetch_ticket(@jira_ticket)
   end
 
   def create_commit_message_from_branch_name
@@ -95,11 +93,11 @@ class CreateGitBranchService
     end
   end
 
-  def create_commit_message_from_ticket(ticket)
+  def create_commit_message_from_ticket
     type_prefix = ticket.issue_type == 'bug' ? '[FIX]' : '[FEAT]'
     
     commit_message = "#{type_prefix} #{ticket.key} - #{ticket.title}"
-    puts "Commit message: #{commit_message}"
+    log "Commit message: #{commit_message}"
 
     commit_message
   end
@@ -114,36 +112,29 @@ class CreateGitBranchService
     end
   end
 
-  def create_pull_request(github_repo:, title:, issue_type:, ticket_key:, jira_link:, description:)
-    puts "Creating pull request..."
+  def create_pull_request
+    log "Creating pull request..."
     
-    current_branch = `git branch --show-current`.strip
-    base_branch = git_main_branch_name
-    
-    pr_description = prepare_pr_description(
-      issue_type:, 
-      ticket_key:, 
-      jira_link:, 
-      description:
+    @github_client.create_pull_request(
+      github_repo_info[:owner], 
+      github_repo_info[:repo], 
+      {
+        title: title,
+        head: branch_name,
+        base: git_main_branch_name,
+        body: prepare_pr_description
+      }
     )
-    
-    pr_data = {
-      title: title,
-      head: current_branch,
-      base: base_branch,
-      body: pr_description
-    }
-    
-    @github_client.create_pull_request(github_repo[:owner], github_repo[:repo], pr_data)
 
-    puts "Pull request created successfully: #{response['html_url']}"
+    log "Pull request created successfully: #{response['html_url']}"
+
     response['html_url']
   rescue => e
-    puts "Error creating pull request: #{e.message}"
+    log_error "Creating pull request: #{e.message}"
     exit 1
   end
 
-  def prepare_pr_description(issue_type:, ticket_key:, jira_link:, description:)
+  def prepare_pr_description
     template = fetch_pr_template
     
     if issue_type == 'bug'
@@ -154,8 +145,8 @@ class CreateGitBranchService
       template = template.gsub(/- \[ \] [Nn]ouvelle/, '- [x] Nouvelle fonctionnalité')
     end
     
-    if ticket_key && jira_link
-      template = template.gsub(/(##\s*📔?\s*[Tt]icket[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n- [#{ticket_key}](#{jira_link})\n\n")
+    if @with_ticket && ticket.key && ticket.url
+      template = template.gsub(/(##\s*📔?\s*[Tt]icket[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n- [#{ticket.key}](#{ticket.url})\n\n")
     end
     
     if description
@@ -167,20 +158,20 @@ class CreateGitBranchService
   end
 
   def fetch_pr_template
-    puts "Fetching pull request template from local file..."
+    log "Fetching pull request template from local file..."
     
     template_path = File.join(Dir.pwd, 'pull_request_template.md')
     
     if File.exist?(template_path)
-      puts "Found PR template at: #{template_path}"
+      log "Found PR template at: #{template_path}"
       File.read(template_path)
     else
-      puts "Warning: Could not find PR template at #{template_path}, using default template"
+      log "Warning: Could not find PR template at #{template_path}, using default template"
       get_default_template
     end
   rescue => e
-    puts "Error reading PR template file: #{e.message}"
-    puts "Using default template instead"
+    log_error "Reading PR template file: #{e.message}"
+    log "Using default template instead"
     get_default_template
   end
   
@@ -188,15 +179,15 @@ class CreateGitBranchService
     default_template_path = File.join(Dir.pwd, 'resources', 'default_pull_request_template.md')
     
     if File.exist?(default_template_path)
-      puts "Using default template from: #{default_template_path}"
+      log "Using default template from: #{default_template_path}"
       File.read(default_template_path)
     else
-      puts "Warning: Default template not found at #{default_template_path}, using fallback template"
+      log_warning "Default template not found at #{default_template_path}, using fallback template"
       get_fallback_template
     end
   rescue => e
-    puts "Error reading default template file: #{e.message}"
-    puts "Using fallback template instead"
+    log_error "Reading default template file: #{e.message}"
+    log "Using fallback template instead"
     get_fallback_template
   end
   

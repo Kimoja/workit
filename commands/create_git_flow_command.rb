@@ -54,13 +54,18 @@ def create_git_flow_command
 
   validate_git_flow_command_inputs!(branch_name:, jira_ticket:)
 
+  log "🚀 Creating Git flow (Branche and Pull Request)"
+  log "Branch name: #{branch_name}"
+  log "Jira ticket: #{jira_ticket}"
+  log ""
+
   create_git_flow_service = CreateGitFlowService.new(
     branch_name:,
     jira_ticket:, 
     jira_client:,
-    github_client:
+    github_client:,
   )
-  
+
   create_git_flow_service.call
 end
 

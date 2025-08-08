@@ -62,6 +62,13 @@ def create_jira_ticket_command
   
   validate_create_jira_ticket_command!(title:, board_name:, issue_type:, assignee_name:)
 
+  log "🚀 Creating Jira ticket"
+  log "Board: #{board_name}"
+  log "Title: #{title}"
+  log "Type: #{issue_type}"
+  log "Assignee: #{assignee_name}"
+  log ""
+  
   create_jira_ticket_service = CreateJiraTicketService.new(
     title:,
     board_name:,

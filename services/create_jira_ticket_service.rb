@@ -1,17 +1,9 @@
 
-class CreateJiraTicketService
-  def initialize(title:, board_name:, issue_type:, assignee_name:, jira_client:)
-    @title = title
-    @board_name = board_name
-    @issue_type = issue_type
-    @assignee_name = assignee_name
-    @jira_client = jira_client
-  end
-
+require_relative 'base_service'
+class CreateJiraTicketService < BaseService
   attr_reader :title, :board_name, :issue_type, :assignee_name, :jira_client
 
   def call
-    summary
     ticket = create_ticket
     add_to_cache(ticket)
     display_success(ticket)
@@ -19,15 +11,6 @@ class CreateJiraTicketService
   end
 
   private
-
-  def summary
-    log "🚀 Creating Jira ticket"
-    log "Board: #{board_name}"
-    log "Title: #{title}"
-    log "Type: #{issue_type}"
-    log "Assignee: #{assignee_name}"
-    log ""
-  end
 
   def board_id
     @board_id ||= find_board_id
@@ -302,6 +285,9 @@ class CreateJiraTicketService
     end
     
     payload[:fields][:assignee] = { id: user_id } if user_id
+    
+    binding.pry 
+    raise
     
     jira_client.create_ticket(payload)
   end

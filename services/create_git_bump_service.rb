@@ -1,6 +1,6 @@
-require_relative 'create_git_branch_service'
+require_relative 'base_service'
 
-class CreateGitBumpBranchService < CreateGitBranchService
+class CreateGitBumpService < BaseService
   def call
     summary
     git_navigate_to_repo!

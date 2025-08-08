@@ -91,6 +91,13 @@ def git_create_branch(branch_name, ask_if_exists: false)
   end
 end
 
+def git_setup_branch_workflow(branch_name, ask_if_exists: true)
+  git_navigate_to_repo!
+  git_commit_if_changes
+  git_switch_to_main_branch
+  git_create_branch(branch_name, ask_if_exists: true)
+end
+
 def git_push_branch
   log "Pushing branch..."
 

@@ -12,11 +12,12 @@ class CreateGitBranchService
 
     git_navigate_to_repo!
     git_commit_if_changes
-    git_switch_to_main_branch
     binding.pry 
-    # raise
+    raise
+    git_switch_to_main_branch
+
     git_create_branch(branch_name, ask_if_exists: true)
-    git_empty_commit(commit_message)
+    git_commit_empty(commit_message)
     git_push_branch
     pr_url = create_pull_request
     
@@ -115,8 +116,6 @@ class CreateGitBranchService
   def create_pull_request
     log "Creating pull request..."
 
-    binding.pry 
-    raise
     pull_request = @github_client.create_pull_request(
       github_repo_info[:owner], 
       github_repo_info[:repo], 

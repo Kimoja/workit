@@ -29,7 +29,7 @@ def git_commit(message)
   system("git add . && git commit -m '#{message}'") || raise('Failed to create commit')
 end
 
-def git_empty_commit(message)
+def git_commit_empty(message)
   log "Creating empty commit..."
   system("git commit --allow-empty -m '#{message}'") || raise('Failed to create commit')
 end

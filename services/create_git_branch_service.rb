@@ -43,8 +43,7 @@ class CreateGitBranchService
       issue_type:, 
       ticket_key:, 
       jira_link:, 
-      description:,
-      ticket_data:
+      description:
     )
     
     open_in_browser(pr_url)
@@ -163,18 +162,17 @@ class CreateGitBranchService
     system("git commit --allow-empty -m '#{message}'") || raise('Failed to create empty commit')
   end
 
-  def create_pull_request(github_repo:, commit_message:, issue_type:, ticket_key:, jira_link:, description:, ticket_data:)
+  def create_pull_request(github_repo:, commit_message:, issue_type:, ticket_key:, jira_link:, description:)
     puts "Creating pull request..."
     
     current_branch = `git branch --show-current`.strip
     base_branch = git_head_branch_name
     
     pr_description = prepare_pr_description(
-      issue_type: issue_type, 
-      ticket_key: ticket_key, 
-      jira_link: jira_link, 
-      description: description,
-      ticket_data: ticket_data
+      issue_type:, 
+      ticket_key:, 
+      jira_link:, 
+      description:
     )
     
     pr_data = {
@@ -193,33 +191,22 @@ class CreateGitBranchService
     exit 1
   end
 
-  def prepare_pr_description(issue_type:, ticket_key:, jira_link:, description:, ticket_data:)
+  def prepare_pr_description(issue_type:, ticket_key:, jira_link:, description:)
     template = fetch_pr_template
     
-    return template unless ticket_data # If no ticket data, return template as is
-    
-    # Check the right box according to ticket type
     if issue_type == 'bug'
-      template = template.gsub('- [ ] Bug fix', '- [x] Bug fix')
+      template = template.gsub(/- \[ \] [Bb]ug/, '- [x] Bug fix')
     else
-      template = template.gsub('- [ ] Nouvelle(s) fonctionnalité(s)', '- [x] Nouvelle fonctionnalité')
+      template = template.gsub(/- \[ \] [Nn]ouvelle/, '- [x] Nouvelle fonctionnalité')
     end
     
-    # Add Jira link
     if ticket_key && jira_link
-      template = template.gsub('## 📔 Ticket(s):', "## 📔 Ticket(s):\n\n- [#{ticket_key}](#{jira_link})")
+      template = template.gsub(/(##\s*📔\s*[Tt]icket[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n- [#{ticket_key}](#{jira_link})\n\n")
     end
     
-    # Add ticket description
-    ticket_description = ticket_data.dig('fields', 'description')
-    if ticket_description && !ticket_description.strip.empty?
-      # Clean Jira description (remove Jira markup)
-      clean_description = ticket_description.gsub(/\{[^}]+\}/, '').strip
-      template = template.gsub('## 📓 Description:', "## 📓 Description:\n\n#{clean_description}")
-    else
-      # Use title if no description
-      title = ticket_data.dig('fields', 'summary') || ''
-      template = template.gsub('## 📓 Description:', "## 📓 Description:\n\n#{title}")
+    if description && description.strip.empty?
+      clean_description = description.gsub(/\{[^}]+\}/, '').strip
+      template = template.gsub(/(##\s*📓\s*[Dd]escription[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n#{clean_description}\n\n")
     end
     
     template

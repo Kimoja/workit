@@ -114,21 +114,24 @@ class CreateGitBranchService
 
   def create_pull_request
     log "Creating pull request..."
-    
-    @github_client.create_pull_request(
+
+    binding.pry 
+    raise
+    pull_request = @github_client.create_pull_request(
       github_repo_info[:owner], 
       github_repo_info[:repo], 
       {
-        title: title,
+        title: commit_message,
         head: branch_name,
         base: git_main_branch_name,
         body: prepare_pr_description
       }
     )
 
-    log "Pull request created successfully: #{response['html_url']}"
+    url = pull_request['html_url']
+    log "Pull request created successfully: #{url}"
 
-    response['html_url']
+    url
   rescue => e
     log_error "Creating pull request: #{e.message}"
     exit 1

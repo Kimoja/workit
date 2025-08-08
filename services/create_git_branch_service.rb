@@ -12,8 +12,6 @@ class CreateGitBranchService
 
     git_navigate_to_repo!
     git_commit_if_changes
-    binding.pry 
-    raise
     git_switch_to_main_branch
 
     git_create_branch(branch_name, ask_if_exists: true)

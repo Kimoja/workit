@@ -204,7 +204,7 @@ class CreateGitBranchService
       template = template.gsub(/(##\s*📔\s*[Tt]icket[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n- [#{ticket_key}](#{jira_link})\n\n")
     end
     
-    if description && description.strip.empty?
+    if description
       clean_description = description.gsub(/\{[^}]+\}/, '').strip
       template = template.gsub(/(##\s*📓\s*[Dd]escription[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n#{clean_description}\n\n")
     end

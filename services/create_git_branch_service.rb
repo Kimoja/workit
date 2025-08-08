@@ -119,7 +119,7 @@ class CreateGitBranchService
       github_repo_info[:owner], 
       github_repo_info[:repo], 
       {
-        title: title,
+        title: commit_message,
         head: branch_name,
         base: git_main_branch_name,
         body: prepare_pr_description

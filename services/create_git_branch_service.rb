@@ -13,8 +13,6 @@ class CreateGitBranchService
     git_commit_if_changes
     git_switch_to_head_branch
 
-    binding.pry 
-    raise
     if @branch_name
       branch_name = @branch_name
       commit_message = create_commit_message_from_branch_name

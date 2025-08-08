@@ -30,7 +30,7 @@ class CreateGitBranchService
       issue_type = get_issue_type_from_ticket(ticket_data)
       ticket_key = get_ticket_key
       description = get_ticket_description(ticket_data)
-      jira_link = get_jira_link(ticket_key)
+      jira_link = get_jira_link(ticket_data, ticket_key)
     end
 
     git_create_branch(branch_name)
@@ -38,13 +38,13 @@ class CreateGitBranchService
     git_push_branch
     
     pr_url = create_pull_request(
-      github_repo: github_repo, 
-      commit_message: commit_message, 
-      issue_type: issue_type, 
-      ticket_key: ticket_key, 
-      jira_link: jira_link, 
-      description: description,
-      ticket_data: ticket_data
+      github_repo:, 
+      commit_message:, 
+      issue_type:, 
+      ticket_key:, 
+      jira_link:, 
+      description:,
+      ticket_data:
     )
     
     open_in_browser(pr_url)
@@ -149,9 +149,13 @@ class CreateGitBranchService
     ticket_data.dig('fields', 'description') || ticket_data.dig('fields', 'summary') || ''
   end
 
-  def get_jira_link(ticket_key)
-    return nil unless ticket_key
-    "#{@jira_url}/browse/#{ticket_key}"
+  def get_jira_link(ticket_data, ticket_key)
+    return nil unless ticket_data
+
+    url = ticket_data["self"]
+    uri = URI.parse(url)
+
+     "#{uri.scheme}://#{uri.host}/browse/#{ticket_key}"
   end
 
   def create_empty_commit(message)

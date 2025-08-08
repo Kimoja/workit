@@ -1,0 +1,11 @@
+{
+  "board_id_kraft": {
+    "id": 53,
+    "type": "scrum"
+  },
+  "board_info_53": {
+    "type": "scrum",
+    "project_key": "KRAFT"
+  },
+  "sprint_field_id": "customfield_10019"
+}

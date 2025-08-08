@@ -1,20 +1,19 @@
-
 def config
   return @config if defined?(@config)
 
   unless File.exist?('config.json')
-    log_error"Fichier 'config.json' de configuration introuvable"
+    log_error "Configuration file 'config.json' not found"
     log ""
-    log "Créez un fichier config.json avec la structure suivante:"
+    log "Create a config.json file with the following structure:"
     log_json(
       {
         "jira" => {
-          "url" => "https://votre-instance.atlassian.net",
-          "email" => "votre.email@example.com",
-          "token" => "VOTRE_TOKEN_API",
-          "default_board" => "NOM_DU_BOARD",
-          "assignee_name" => "Votre Nom",
-          "issue_type" => "Tâche"
+          "url" => "https://your-instance.atlassian.net",
+          "email" => "your.email@example.com",
+          "token" => "YOUR_API_TOKEN",
+          "default_board" => "BOARD_NAME",
+          "assignee_name" => "Your Name",
+          "issue_type" => "Task"
         },
         "github": {
           "token": "XXX"

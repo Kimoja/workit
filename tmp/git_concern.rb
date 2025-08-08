@@ -4,7 +4,7 @@ require_relative 'deps'
 
 module GitConcern
 
-  def find_git_repo
+  def git_find_repo
     if git_repo_exists?('.')
       puts "Git repository found in current directory"
       return
@@ -28,8 +28,8 @@ module GitConcern
     File.directory?(File.join(path, '.git'))
   end
 
-  def commit_if_changes
-    if has_changes?
+  def git_commit_if_changes
+    if git_has_changes?
       puts "Changes detected, creating WIP commit..."
       system('git add . && git commit -m "WIP autocommit"') || raise('Failed to create WIP commit')
     else
@@ -37,7 +37,7 @@ module GitConcern
     end
   end
 
-  def has_changes?
+  def git_has_changes?
     !`git status --porcelain`.strip.empty?
   end
 
@@ -50,7 +50,7 @@ module GitConcern
     system("git checkout -b #{branch_name}") || raise("Failed to create branch: #{branch_name}")
   end
 
-  def push_branch
+  def git_push_branch
     puts "Pushing branch..."
 
     system('git push -f') || raise('Failed to push branch')

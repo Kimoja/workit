@@ -1,18 +1,16 @@
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-BOOTSTRAP_SCRIPT="${SCRIPT_DIR}/bootstrap.rb"
+COMMAND_SCRIPT="${SCRIPT_DIR}/command.rb"
 
 jira-ticket() {
-    ruby "$BOOTSTRAP_SCRIPT" "Commands.create_jira_ticket_command" "$@"
+    ruby "$COMMAND_SCRIPT" "create_jira_ticket_command" "$@"
 }
-alias jt='jira-ticket'
 alias ticket='jira-ticket'
 
 git-branch() {
-    ruby "$BOOTSTRAP_SCRIPT" "Commands.create_git_branch_command" "$@"
+    ruby "$COMMAND_SCRIPT" "create_git_branch_command" "$@"
 }
-alias gb='git-branch'
-alias task='git-branch'
+alias branch='git-branch'
 
 git-bump() {
     local script_path="${JIRA_BASE_SCRIPT}/git_bump.rb"

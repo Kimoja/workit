@@ -14,16 +14,16 @@ class JiraGitWorkflow
   end
 
   def run
-    find_git_repo
+    git_find_repo
     init_github_repo_info
-    commit_if_changes
+    git_commit_if_changes
     switch_to_master
     ticket_data = fetch_jira_ticket
-    branch_name = create_branch_name(ticket_data)
+    branch_name = git_create_branch_name(ticket_data)
     create_and_checkout_branch(branch_name)
     commit_message = create_commit_message(ticket_data)
     create_empty_commit(commit_message)
-    push_branch
+    git_push_branch
     pr_url = create_pull_request(ticket_data, commit_message)
     open_pull_request_in_browser(pr_url)
   end
@@ -66,7 +66,7 @@ class JiraGitWorkflow
     JSON.parse(response.body)
   end
 
-  def create_branch_name(ticket_data)
+  def git_create_branch_name(ticket_data)
     issue_type = ticket_data.dig('fields', 'issuetype', 'name')&.downcase
     title = ticket_data.dig('fields', 'summary') || ''
     

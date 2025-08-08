@@ -13,16 +13,16 @@ class GitBumpWorkflow
   end
 
   def run
-    find_git_repo
+    git_find_repo
     initialize_repo_info
-    commit_if_changes
+    git_commit_if_changes
     switch_to_master
 
-    create_branch
+    git_create_branch
     get_dependabot_pull_requests
     cherry_pick_commits_from_pull_requests
     bundle_update
-    # push_branch
+    # git_push_branch
     pr_description = create_pull_request_description
     binding.pry 
 
@@ -44,7 +44,7 @@ class GitBumpWorkflow
     end
   end
 
-  def create_branch
+  def git_create_branch
     today = Date.today.strftime('%Y-%m-%d')
     @branch_name = "dump/#{today}"
     

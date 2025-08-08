@@ -1,24 +1,27 @@
 
-class GithubClient
-  BASE_URL = "https://api.github.com"
+class JiraClient
+  BASE_URL = "https://cheerz0.atlassian.net"
 
   def self.build_from_config!(config)
-    token = config.github.token
+    email = config.jira.email
+    token = config.jira.token
 
-    if token.nil? || token.strip.empty?
-      log_error "Configuration parameter 'github.token' is required"
+    if email.nil? || email.strip.empty?
+      log_error "Configuration parameter 'jira.email' is required"
       exit 1
     end
 
-    new(token)
+    if token.nil? || token.strip.empty?
+      log_error "Configuration parameter 'jira.token' is required"
+      exit 1
+    end
+
+    new(email, token)
   end
 
-  def initialize(token)
+  def initialize(email, token)
+    @email = email
     @token = token
-  end
-
-  def create_pull_request(owner, repo, pull_request_data)
-    post("/repos/#{owner}/#{repo}/pulls", pull_request_data)
   end
 
   def get(endpoint)
@@ -46,19 +49,19 @@ class GithubClient
       raise "Unsupported HTTP method: #{method}"
     end
 
-    request['Authorization'] = "token #{@token}"
-    request['Accept'] = 'application/vnd.github.v3+json'
+    auth_string = Base64.strict_encode64("#{@email}:#{@token}")
+    request['Authorization'] = "Basic #{auth_string}"
     request['Content-Type'] = 'application/json'
 
     response = http.request(request)
     
     unless response.is_a?(Net::HTTPSuccess)
       error_msg = begin
-        JSON.parse(response.body)['message'] || response.message
+        JSON.parse(response.body)['errorMessages']&.join(', ') || response.message
       rescue
         response.message
       end
-      raise "GitHub API error (#{response.code}): #{error_msg}"
+      raise "API error (#{response.code}): #{error_msg}"
     end
 
     JSON.parse(response.body)

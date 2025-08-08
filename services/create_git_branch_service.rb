@@ -9,17 +9,25 @@ class CreateGitBranchService
 
   def call
     display_info
-    binding.pry
-    raise
     git_find_repo
     github_repo = init_github_repo_info
     git_commit_if_changes
     git_switch_to_head_branch
-    ticket_data = fetch_jira_ticket
-    branch_name = git_create_branch_name(ticket_data)
+
+    binding.pry
+    raise
+    if @branch_name
+      branch_name = @branch_name
+      commit_message = branch_name
+    else
+      ticket_data = fetch_jira_ticket
+      branch_name = git_create_branch_name_from_jira_ticket(ticket_data)
+      commit_message = create_commit_message_from_jira_ticket(ticket_data)
+    end
+
     git_create_branch(branch_name)
-    commit_message = create_commit_message(ticket_data)
     create_empty_commit(commit_message)
+
     git_push_branch
     pr_url = create_pull_request(github_repo, ticket_data, commit_message)
     open_in_browser(pr_url)
@@ -54,7 +62,7 @@ class CreateGitBranchService
     @jira_client.get("/rest/api/2/issue/#{@jira_ticket}")
   end
 
-  def git_create_branch_name(ticket_data)
+  def git_create_branch_name_from_jira_ticket(ticket_data)
     issue_type = ticket_data.dig('fields', 'issuetype', 'name')&.downcase
     title = ticket_data.dig('fields', 'summary') || ''
     
@@ -76,7 +84,7 @@ class CreateGitBranchService
     branch_name
   end 
 
-  def create_commit_message(ticket_data)
+  def create_commit_message_from_jira_ticket(ticket_data)
     issue_type = ticket_data.dig('fields', 'issuetype', 'name')&.downcase
     title = (ticket_data.dig('fields', 'summary') || '').gsub(/^\[.*?\]\s*/, '')
     ticket_key = @jira_ticket.upcase

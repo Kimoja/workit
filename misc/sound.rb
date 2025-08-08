@@ -1,4 +1,5 @@
 def play_promt_sound
+  return
   case RUBY_PLATFORM
   when /darwin/ # macOS
     system("afplay /System/Library/Sounds/Glass.aiff > /dev/null 2>&1 &")

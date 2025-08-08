@@ -62,8 +62,10 @@ def create_git_flow_command
   create_git_flow_service = CreateGitFlowService.new(
     branch_name:,
     issue_key: issue, 
-    issue_client:,
     github_client:,
+    repo: github_repo_info[:repo],
+    owner: github_repo_info[:owner],
+    issue_client:,
   )
 
   create_git_flow_service.call

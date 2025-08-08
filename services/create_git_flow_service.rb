@@ -1,10 +1,10 @@
 require_relative 'base_service'
 
 class CreateGitFlowService < BaseService
-  attr_reader :branch_name, :issue_key, :issue_client, :github_client
+  attr_reader :branch_name, :issue_key, :issue_client, :git_repo_client, :repo, :owner
 
   def call
-    git_setup_branch_workflow(branch_name, ask_if_exists: true)
+    setup_branch_workflow
     git_commit_empty(commit_message)
     git_push_branch
     pr_url = create_pull_request
@@ -34,14 +34,27 @@ class CreateGitFlowService < BaseService
     @description ||= with_issue ? issue.description : commit_message
   end
 
-  def github_repo_info
-    @github_repo_info ||= git_repo_info
-  end
-
   def issue_type
     @issue_type ||=  with_issue ? issue.issue_type : get_issue_type_from_branch_name
   end
 
+  def setup_branch_workflow
+    git_navigate_to_repo!
+    git_commit_if_changes
+    # Si aucune branche, demander à l'utilisateur d'utiliser la branche actuelle
+    # Sinon, demande d'utiliser master ou la branche actuelle
+    if git_current_branch != git_main_branch_name
+      yes_no(
+        text: "Do you want to use '#{git_main_branch_name}' as base branche?", 
+        yes: proc {
+          git_switch_to_main_branch
+        }
+      )
+    end
+
+    git_create_branch(branch_name, ask_if_exists: true)
+  end
+  
   def create_branch_name_from_issue
     prefix = issue.issue_type == 'bug' ? 'fix/' : 'feat/'
     branch_suffix = issue.title
@@ -100,10 +113,11 @@ class CreateGitFlowService < BaseService
 
   def create_pull_request
     log "Creating pull request..."
-
-    pull_request = github_client.create_pull_request(
-      github_repo_info[:owner], 
-      github_repo_info[:repo], 
+    binding.pry 
+    raise
+    pull_request = git_repo_client.create_pull_request(
+      owner, 
+      repo, 
       {
         title: commit_message,
         head: branch_name,

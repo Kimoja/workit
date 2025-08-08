@@ -119,7 +119,7 @@ def git_main_branch_name
     return 'master'
   end
   
-  current_branch = `git branch --show-current`.strip
+  current_branch = git_current_branch
   return current_branch.empty? ? 'main' : current_branch
 end
 
@@ -128,4 +128,7 @@ def git_fetch_branch(branch_name)
   
   system("git fetch origin #{branch_name}:#{branch_name}")
 end
-      
+    
+def git_current_branch
+  `git branch --show-current`.strip
+end

@@ -3,7 +3,9 @@
 require_relative 'deps'
 
 begin
-  eval(ARGV.shift)
+  func = ARGV.shift
+  require "commands/#{func}"
+  eval(func)
 rescue => e
   log_error "#{e.message}"
   e.backtrace[0..20].each { |line| log "#{line}" }

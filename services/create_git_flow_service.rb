@@ -1,4 +1,4 @@
-class CreateGitBranchService
+class CreateGitFlowService
   def initialize(branch_name:, jira_ticket:, jira_client:, github_client:)
     @branch_name = branch_name
     @jira_ticket = jira_ticket
@@ -12,10 +12,10 @@ class CreateGitBranchService
 
     git_navigate_to_repo!
     git_commit_if_changes
-    binding.pry 
-    raise
     git_switch_to_main_branch
 
+    binding.pry
+    raise
     git_create_branch(branch_name, ask_if_exists: true)
     git_commit_empty(commit_message)
     git_push_branch
@@ -50,7 +50,7 @@ class CreateGitBranchService
   end
 
   def github_repo_info
-    @github_repo_info ||= git_get_github_repo_info
+    @github_repo_info ||= git_repo_info
   end
 
   def issue_type

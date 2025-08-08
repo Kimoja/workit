@@ -77,9 +77,9 @@ class JiraClient < BaseClient
 
   def fetch_user_by_name(name)
     encoded_name = URI.encode_www_form_component(name)
-    response = @jira_client.get("/rest/api/3/user/search?query=#{encoded_name}")
+    response = get("/rest/api/3/user/search?query=#{encoded_name}")
     
-   response.find { |u| u['displayName'].match(/#{Regexp.escape(name)}/i) }
+    response.find { |u| u['displayName'].match(/#{Regexp.escape(name)}/i) }
   end
 
   def request(method, endpoint, body = nil)

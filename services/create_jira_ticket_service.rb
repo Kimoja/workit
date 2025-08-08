@@ -8,52 +8,58 @@ class CreateJiraTicketService
     @jira_client = jira_client
   end
 
+  attr_reader :title, :board_name, :issue_type, :assignee_name, :jira_client
+
   def call
     summary
-
-    board_id = find_board_id(@board_name)
-    board_info = get_board_info(board_id)
-    project_key = board_info['project_key']
-    board_type = board_info['type']
-    
-    sprint_id = nil
-    sprint_field_id = nil
-    
-    if board_type == 'scrum'
-      sprint_field_id = find_sprint_field_id
-      sprint_id = find_active_sprint(board_id)
-    end
-    # NE MODIFIE PAS LE BINDING.PRY ET RAISE
-    binding.pry 
-    raise 
-    user_id = find_user_id(@assignee_name)
-    ticket = create_ticket(@title, sprint_id, sprint_field_id, user_id, @issue_type, project_key)
-
-    display_success(ticket, board_type, sprint_id)
-
+    ticket = create_ticket
+    add_to_cache(ticket)
+    display_success(ticket)
     open_browser(ticket.url)
-    
-    cache_set("last_jira_ticket", { 
-      'url' => ticket.url, 
-      'issue_key' => ticket.key 
-    })
   end
 
   private
 
   def summary
     log "🚀 Creating Jira ticket"
-    log "Board: #{@board_name}"
-    log "Title: #{@title}"
-    log "Type: #{@issue_type}"
-    log "Assignee: #{@assignee_name}"
+    log "Board: #{board_name}"
+    log "Title: #{title}"
+    log "Type: #{issue_type}"
+    log "Assignee: #{assignee_name}"
     log ""
   end
 
-  def find_board_id(board_name)
+  def board_id
+    @board_id ||= find_board_id
+  end
+
+  def board_info
+    @board_id ||= find_board_info
+  end
+
+  def board_type
+    @project_key ||= board_info['type']
+  end
+
+  def project_key
+    @project_key ||= board_info['project_key']
+  end
+
+  def sprint_field_id
+    @sprint_field_id ||= board_type == 'scrum' ? find_sprint_field_id : nil
+  end
+
+  def sprint_id
+    @sprint_id ||= board_type == 'scrum' ? find_active_sprint : nil
+  end
+
+  def user_id
+    @user_id ||= find_user_id
+  end
+  
+  def find_board_id
     cache_key = "board_id_#{board_name.downcase.gsub(/\s+/, '_')}"
     
-    # Cache verification
     cached_result = cache_get(cache_key)
     if cached_result
       log "🔍 Board '#{board_name}' found in cache"
@@ -63,7 +69,7 @@ class CreateJiraTicketService
     
     log "🔍 Searching for board '#{board_name}'..."
 
-    boards = @jira_client.fetch_boards
+    boards = jira_client.fetch_boards
     board = boards.find { |b| b['name'].match(/#{Regexp.escape(board_name)}/i) }
     
     unless board
@@ -75,7 +81,6 @@ class CreateJiraTicketService
     
     log_success "Board found: ID #{board['id']} (Type: #{board['type']})"
     
-    # Cache with string keys
     cache_set(cache_key, { 
       'id' => board['id'], 
       'type' => board['type'] 
@@ -84,10 +89,9 @@ class CreateJiraTicketService
     board['id']
   end
 
-  def get_board_info(board_id)
+  def find_board_info
     cache_key = "board_info_#{board_id}"
     
-    # Cache verification
     cached_result = cache_get(cache_key)
     if cached_result
       log "🔍 Board information found in cache"
@@ -98,7 +102,7 @@ class CreateJiraTicketService
     
     log "🔍 Retrieving board information..."
     
-    board = @jira_client.fetch_board(board_id)
+    board = jira_client.fetch_board(board_id)
     board_type = board['type'].downcase
     project_key = extract_project_key(board_id, board)
     
@@ -114,7 +118,6 @@ class CreateJiraTicketService
       'project_key' => project_key
     }
     
-    # Cache
     cache_set(cache_key, result)
     
     result
@@ -128,7 +131,7 @@ class CreateJiraTicketService
 
     # Method 2: Via board configuration
     begin
-      board_configuration = @jira_client.fetch_board_configuration(board_id)
+      board_configuration = jira_client.fetch_board_configuration(board_id)
       if board_configuration['location'] && board_configuration['location']['projectKey']
         return board_configuration['location']['projectKey']
       end
@@ -139,11 +142,10 @@ class CreateJiraTicketService
     nil
   end
 
-  def find_active_sprint(board_id)
-    # Active sprints change frequently, no cache for this method
+  def find_active_sprint
     log "🔍 Searching for active sprint..."
 
-    active_sprint = @jira_client.fetch_active_sprint(board_id)
+    active_sprint = jira_client.fetch_active_sprint(board_id)
 
     if active_sprint
       log_success "Active sprint found: '#{active_sprint['name']}' (ID: #{active_sprint['id']})"
@@ -175,7 +177,7 @@ class CreateJiraTicketService
     log "📋 Scrum board detected - sprint management enabled"
     
     begin
-      field = @jira_client.fetch_field_by_name('Sprint')
+      field = jira_client.fetch_field_by_name('Sprint')
       
       unless field
         log_warning "Sprint field not found - board without sprints or missing configuration"
@@ -191,15 +193,15 @@ class CreateJiraTicketService
     end
   end
 
-  def find_user_id(display_name)
-    cache_key = "user_id_#{display_name.downcase.gsub(/\s+/, '_')}"
+  def find_user_id
+    cache_key = "user_id_#{assignee_name.downcase.gsub(/\s+/, '_')}"
     
     # Cache verification
     cached_result = cache_get(cache_key)
     if cached_result
-      log "🔍 User '#{display_name}' found in cache"
+      log "🔍 User '#{assignee_name}' found in cache"
       if cached_result == 'not_found'  # String instead of symbol
-        log_warning "User '#{display_name}' not found (cache), ticket will be unassigned"
+        log_warning "User '#{assignee_name}' not found (cache), ticket will be unassigned"
         return nil
       else
         log_success "User found: #{cached_result['display_name']}"
@@ -207,12 +209,12 @@ class CreateJiraTicketService
       end
     end
     
-    log "🔍 Searching for user '#{display_name}'..."
+    log "🔍 Searching for user '#{assignee_name}'..."
     
-    user = @jira_client.fetch_user_by_name(display_name)
+    user = jira_client.fetch_user_by_name(assignee_name)
     
     unless user
-      log_warning "User '#{display_name}' not found, ticket will be unassigned"
+      log_warning "User '#{assignee_name}' not found, ticket will be unassigned"
       # Cache negative result (string)
       cache_set(cache_key, 'not_found')
       return nil
@@ -229,20 +231,20 @@ class CreateJiraTicketService
     user['accountId']
   end
 
-  def validate_issue_type(issue_type, project_key)
+  def validate_issue_type
     cache_key = "issue_types_#{project_key}"
     
     # Cache verification
     cached_types = cache_get(cache_key)
     if cached_types
       log "🔍 Issue types for project #{project_key} found in cache"
-      return find_matching_issue_type(issue_type, cached_types, project_key)
+      return find_matching_issue_type(cached_types)
     end
     
     log "🔍 Validating issue type '#{issue_type}' for project #{project_key}..."
     
     begin
-      issue_types = @jira_client.fetch_issue_types(project_key)
+      issue_types = jira_client.fetch_issue_types(project_key)
       
       unless issue_types
         log_warning "Unable to validate issue type, using without validation"
@@ -251,7 +253,7 @@ class CreateJiraTicketService
       
       cache_set(cache_key, issue_types)
       
-      return find_matching_issue_type(issue_type, issue_types, project_key)
+      return find_matching_issue_type(issue_types)
     rescue => e
       log_warning "Error validating issue type: #{e.message}"
       log "Using specified type without validation: #{issue_type}"
@@ -259,7 +261,7 @@ class CreateJiraTicketService
     end
   end
 
-  def find_matching_issue_type(issue_type, available_types, project_key)
+  def find_matching_issue_type(available_types)
     # Exact search first
     exact_match = available_types.find { |type| type.downcase == issue_type.downcase }
     return exact_match if exact_match
@@ -278,10 +280,10 @@ class CreateJiraTicketService
     raise "Invalid issue type"
   end
 
-  def create_ticket(title, sprint_id, sprint_field_id, user_id, issue_type, project_key)
+  def create_ticket
     log "🎫 Creating ticket..."
     
-    validated_type = validate_issue_type(issue_type, project_key)
+    validated_type = validate_issue_type
     
     payload = {
       fields: {
@@ -301,10 +303,17 @@ class CreateJiraTicketService
     
     payload[:fields][:assignee] = { id: user_id } if user_id
     
-    @jira_client.create_ticket(payload)
+    jira_client.create_ticket(payload)
   end
 
-  def display_success(ticket, board_type, sprint_id)
+  def add_to_cache(ticket)
+    cache_set("last_jira_ticket", { 
+      'url' => ticket.url, 
+      'issue_key' => ticket.key 
+    })
+  end
+
+  def display_success(ticket)
     log_success "Ticket created successfully: #{ticket.key}"
     log "🔗 URL: #{ticket.url}"
     

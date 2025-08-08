@@ -7,10 +7,10 @@ jira-ticket() {
 }
 alias ticket='jira-ticket'
 
-git-branch() {
-    ruby "$COMMAND_SCRIPT" "create_git_branch_command" "$@"
+git-flow() {
+    ruby "$COMMAND_SCRIPT" "create_git_flow_command" "$@"
 }
-alias branch='git-branch'
+alias flow='git-flow'
 
 git-bump() {
     ruby "$COMMAND_SCRIPT" "create_git_bump_command" "$@"

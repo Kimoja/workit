@@ -1,8 +1,8 @@
 require_relative '../clients/jira_client'
 require_relative '../clients/github_client'
-require_relative '../services/create_git_branch_service'
+require_relative '../services/create_git_flow_service'
 
-def create_git_branch_command
+def create_git_flow_command
   options = {}
 
   OptionParser.new do |opts|
@@ -52,19 +52,19 @@ def create_git_branch_command
   jira_client = JiraClient.build_from_config!(config)
   github_client = GithubClient.build_from_config!(config)
 
-  validate_git_branch_command_inputs!(branch_name:, jira_ticket:)
+  validate_git_flow_command_inputs!(branch_name:, jira_ticket:)
 
-  create_git_branch_service = CreateGitBranchService.new(
+  create_git_flow_service = CreateGitFlowService.new(
     branch_name:,
     jira_ticket:, 
     jira_client:,
     github_client:
   )
   
-  create_git_branch_service.call
+  create_git_flow_service.call
 end
 
-def validate_git_branch_command_inputs!(branch_name:, jira_ticket:)
+def validate_git_flow_command_inputs!(branch_name:, jira_ticket:)
   if (branch_name.nil? || branch_name.strip.empty?) && (jira_ticket.nil? || jira_ticket.strip.empty?)
     log_error "Branch name or Jira ticket is required"
     exit 1

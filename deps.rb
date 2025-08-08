@@ -17,7 +17,4 @@ require_relative 'misc/open'
 require_relative 'misc/prompt'
 require_relative 'misc/sound'
 
-# Commands
-require_relative 'commands/create_jira_ticket_command'
-require_relative 'commands/create_git_branch_command'
 

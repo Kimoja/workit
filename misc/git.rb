@@ -53,11 +53,9 @@ def git_switch_to_main_branch
   system("git checkout #{main_branch_name} && git pull") || raise('Failed to switch to master branch')
 end
 
-def git_get_github_repo_info
-  # Get GitHub repo URL from remote origin
+def git_repo_info
   remote_url = `git config --get remote.origin.url`.strip
   
-  # Parse URL to extract owner/repo
   if remote_url.match(/github\.com[\/:](.+)\/(.+)\.git$/)
     owner = $1
     repo = $2

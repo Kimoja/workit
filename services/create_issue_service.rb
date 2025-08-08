@@ -1,13 +1,14 @@
 
 require_relative 'base_service'
-class CreateJiraTicketService < BaseService
-  attr_reader :title, :board_name, :issue_type, :assignee_name, :jira_client
+
+class CreateIssueService < BaseService
+  attr_reader :title, :board_name, :issue_type, :assignee_name, :issue_client
 
   def call
-    ticket = create_ticket
-    add_to_cache(ticket)
-    display_success(ticket)
-    open_browser(ticket.url)
+    issue = create_issue
+    add_to_cache(issue)
+    display_success(issue)
+    open_browser(issue.url)
   end
 
   private
@@ -52,7 +53,7 @@ class CreateJiraTicketService < BaseService
     
     log "🔍 Searching for board '#{board_name}'..."
 
-    boards = jira_client.fetch_boards
+    boards = issue_client.fetch_boards
     board = boards.find { |b| b['name'].match(/#{Regexp.escape(board_name)}/i) }
     
     unless board
@@ -85,7 +86,7 @@ class CreateJiraTicketService < BaseService
     
     log "🔍 Retrieving board information..."
     
-    board = jira_client.fetch_board(board_id)
+    board = issue_client.fetch_board(board_id)
     board_type = board['type'].downcase
     project_key = extract_project_key(board_id, board)
     
@@ -114,7 +115,7 @@ class CreateJiraTicketService < BaseService
 
     # Method 2: Via board configuration
     begin
-      board_configuration = jira_client.fetch_board_configuration(board_id)
+      board_configuration = issue_client.fetch_board_configuration(board_id)
       if board_configuration['location'] && board_configuration['location']['projectKey']
         return board_configuration['location']['projectKey']
       end
@@ -128,7 +129,7 @@ class CreateJiraTicketService < BaseService
   def find_active_sprint
     log "🔍 Searching for active sprint..."
 
-    active_sprint = jira_client.fetch_active_sprint(board_id)
+    active_sprint = issue_client.fetch_active_sprint(board_id)
 
     if active_sprint
       log_success "Active sprint found: '#{active_sprint['name']}' (ID: #{active_sprint['id']})"
@@ -140,7 +141,7 @@ class CreateJiraTicketService < BaseService
 
   rescue => e
     log_warning "Error searching for sprint: #{e.message}"
-    log "📦 Ticket will be created in backlog"
+    log "📦 Issue will be created in backlog"
     return nil
   end
 
@@ -160,7 +161,7 @@ class CreateJiraTicketService < BaseService
     log "📋 Scrum board detected - sprint management enabled"
     
     begin
-      field = jira_client.fetch_field_by_name('Sprint')
+      field = issue_client.fetch_field_by_name('Sprint')
       
       unless field
         log_warning "Sprint field not found - board without sprints or missing configuration"
@@ -184,7 +185,7 @@ class CreateJiraTicketService < BaseService
     if cached_result
       log "🔍 User '#{assignee_name}' found in cache"
       if cached_result == 'not_found'  # String instead of symbol
-        log_warning "User '#{assignee_name}' not found (cache), ticket will be unassigned"
+        log_warning "User '#{assignee_name}' not found (cache), issue will be unassigned"
         return nil
       else
         log_success "User found: #{cached_result['display_name']}"
@@ -194,10 +195,10 @@ class CreateJiraTicketService < BaseService
     
     log "🔍 Searching for user '#{assignee_name}'..."
     
-    user = jira_client.fetch_user_by_name(assignee_name)
+    user = issue_client.fetch_user_by_name(assignee_name)
     
     unless user
-      log_warning "User '#{assignee_name}' not found, ticket will be unassigned"
+      log_warning "User '#{assignee_name}' not found, issue will be unassigned"
       # Cache negative result (string)
       cache_set(cache_key, 'not_found')
       return nil
@@ -227,7 +228,7 @@ class CreateJiraTicketService < BaseService
     log "🔍 Validating issue type '#{issue_type}' for project #{project_key}..."
     
     begin
-      issue_types = jira_client.fetch_issue_types(project_key)
+      issue_types = issue_client.fetch_issue_types(project_key)
       
       unless issue_types
         log_warning "Unable to validate issue type, using without validation"
@@ -263,8 +264,8 @@ class CreateJiraTicketService < BaseService
     raise "Invalid issue type"
   end
 
-  def create_ticket
-    log "🎫 Creating ticket..."
+  def create_issue
+    log "🎫 Creating issue..."
     
     validated_type = validate_issue_type
     
@@ -272,7 +273,7 @@ class CreateJiraTicketService < BaseService
       fields: {
         project: { key: project_key },
         summary: title,
-        description: "Ticket created automatically via Ruby CLI script",
+        description: "Issue created automatically via Ruby CLI script",
         issuetype: { name: validated_type }
       }
     }
@@ -289,26 +290,26 @@ class CreateJiraTicketService < BaseService
     binding.pry 
     raise
     
-    jira_client.create_ticket(payload)
+    issue_client.create_issue(payload)
   end
 
-  def add_to_cache(ticket)
-    cache_set("last_jira_ticket", { 
-      'url' => ticket.url, 
-      'issue_key' => ticket.key 
+  def add_to_cache(issue)
+    cache_set("last_issue", { 
+      'url' => issue.url, 
+      'issue_key' => issue.key 
     })
   end
 
-  def display_success(ticket)
-    log_success "Ticket created successfully: #{ticket.key}"
-    log "🔗 URL: #{ticket.url}"
+  def display_success(issue)
+    log_success "Issue created successfully: #{issue.key}"
+    log "🔗 URL: #{issue.url}"
     
     if board_type == 'scrum' && sprint_id.nil?
-      log "📦 Ticket added to project backlog"
+      log "📦 Issue added to project backlog"
     elsif board_type == 'scrum' && sprint_id
-      log "🏃 Ticket added to active sprint"
+      log "🏃 Issue added to active sprint"
     else
-      log "📋 Ticket added to Kanban board"
+      log "📋 Issue added to Kanban board"
     end
     
     log ""

@@ -9,20 +9,20 @@ def create_git_flow_command
     opts.banner = "Usage: [OPTIONS] \"BRANCH_NAME\""
     opts.separator ""
     opts.separator "Arguments:"
-    opts.separator "  BRANCH_NAME  Branch name (optional if --jira-ticket is defined)"
+    opts.separator "  BRANCH_NAME  Branch name (optional if --issue is defined)"
     opts.separator ""
     opts.separator "Options:"
     
-    opts.on('-t', '--jira-ticket TICKET', 'Jira ticket (e.g., KRAFT-3735)') do |ticket|
-      options[:jira_ticket] = ticket
+    opts.on('-i', '--issue ISSUE', 'Issue (e.g., KRAFT-3735)') do |issue|
+      options[:issue] = issue
     end
     
     opts.on("-h", "--help", "Show this help") do
       log opts
       log ""
       log "Examples:"
-      log "  git-branch \"Fix login bug\""
-      log "  branch -t KRAFT-3735"
+      log "  git-flow \"Fix login bug\""
+      log "  git-flow -t KRAFT-3735"
       log ""
       log "Configuration:"
       log "  The command uses the config.json configuration file"
@@ -30,48 +30,48 @@ def create_git_flow_command
     end
     
     opts.on("-v", "--version", "Show version") do
-      log "Jira Ticket (Cache with string keys)"
+      log "Git Flow"
       exit
     end
   end.parse!
 
   branch_name = ARGV[0]
-  jira_ticket = options[:jira_ticket]
-  last_jira_ticket = cache_get("last_jira_ticket")&.fetch("issue_key")
+  issue = options[:issue]
+  last_issue = cache_get("last_issue")&.fetch("issue_key")
 
-  if !branch_name && !jira_ticket && last_jira_ticket
+  if !branch_name && !issue && last_issue
     yes_no(
-      text: "Do you want to use last Jira create ticket?", 
+      text: "Do you want to use last issue created?", 
       yes: proc {
-        log "jira_ticket set to '#{last_jira_ticket}'..."
-        jira_ticket = last_jira_ticket
+        log "issue set to '#{last_issue}'..."
+        issue = last_issue
       }
     )
   end
 
-  jira_client = JiraClient.build_from_config!(config)
+  issue_client = JiraClient.build_from_config!(config)
   github_client = GithubClient.build_from_config!(config)
 
-  validate_git_flow_command_inputs!(branch_name:, jira_ticket:)
+  validate_git_flow_command_inputs!(branch_name:, issue:)
 
   log "🚀 Creating Git flow (Branche and Pull Request)"
   log "Branch name: #{branch_name}"
-  log "Jira ticket: #{jira_ticket}"
+  log "Issue: #{issue}"
   log ""
 
   create_git_flow_service = CreateGitFlowService.new(
     branch_name:,
-    jira_ticket:, 
-    jira_client:,
+    issue_key: issue, 
+    issue_client:,
     github_client:,
   )
 
   create_git_flow_service.call
 end
 
-def validate_git_flow_command_inputs!(branch_name:, jira_ticket:)
-  if (branch_name.nil? || branch_name.strip.empty?) && (jira_ticket.nil? || jira_ticket.strip.empty?)
-    log_error "Branch name or Jira ticket is required"
+def validate_git_flow_command_inputs!(branch_name:, issue:)
+  if (branch_name.nil? || branch_name.strip.empty?) && (issue.nil? || issue.strip.empty?)
+    log_error "Branch name or Issue is required"
     exit 1
   end
 

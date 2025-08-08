@@ -23,8 +23,8 @@ class CreateGitBumpService < BaseService
       title: create_title, 
       issue_type: "bump", 
       description:,
-      ticket_key: nil, 
-      jira_link: nil, 
+      issue_key: nil, 
+      issue_link: nil, 
     )
     
     open_browser(pr_url)
@@ -35,7 +35,7 @@ class CreateGitBumpService < BaseService
   def summary
     log "🚀 Creating Git bump branch and GitHub pull request"
     log "Branch name: #{@branch_name}"
-    log "Jira ticket: #{@jira_ticket}"
+    log "Jira issue: #{@issue}"
     log ""
   end
 

@@ -1,25 +1,25 @@
 require_relative '../clients/jira_client'
-require_relative '../services/create_jira_ticket_service'
+require_relative '../services/create_issue_service'
 
-def create_jira_ticket_command
+def create_issue_command
   options = {
     board: nil,
     type: nil
   }
   
   OptionParser.new do |opts|
-    opts.banner = "Usage: #{$0} [OPTIONS] \"TICKET_TITLE\""
+    opts.banner = "Usage: #{$0} [OPTIONS] \"ISSUE_TITLE\""
     opts.separator ""
     opts.separator "Arguments:"
-    opts.separator "  TICKET_TITLE  Title of the ticket to create (required)"
+    opts.separator "  ISSUE_TITLE  Title of the isse to create (required)"
     opts.separator ""
     opts.separator "Options:"
     
-    opts.on("-b", "--board BOARD", "Jira board name (default: from config.json)") do |board|
+    opts.on("-b", "--board BOARD", "Issue board name (default: from config.json)") do |board|
       options[:board] = board
     end
     
-    opts.on("-t", "--type TYPE", "Jira issue type (default: from config.json)",
+    opts.on("-t", "--type TYPE", "Issue type (default: from config.json)",
             "Common types: Task, Story, Bug, Epic, Subtask") do |type|
       options[:type] = type
     end
@@ -28,10 +28,10 @@ def create_jira_ticket_command
       log opts
       log ""
       log "Examples:"
-      log "  jira-ticket \"Fix login bug\""
-      log "  ticket -b KRAFT \"Implement new feature\""
-      log "  ticket -t Bug \"Fix image display\""
-      log "  ticket -b BT -t Task \"User interface\""
+      log "  issue \"Fix login bug\""
+      log "  issue -b KRAFT \"Implement new feature\""
+      log "  issue -t Bug \"Fix image display\""
+      log "  issue -b BT -t Task \"User interface\""
       log ""
       log "Configuration:"
       log "  The command uses the config.json configuration file"
@@ -41,14 +41,14 @@ def create_jira_ticket_command
       log "  Kanban  - No sprints, continuous flow"
       log ""
       log "Sprint management:"
-      log "  • Scrum boards: ticket added to active sprint or backlog"
-      log "  • Kanban boards: ticket added directly to board"
-      log "  • No active sprint: ticket added to backlog"
+      log "  • Scrum boards: issue added to active sprint or backlog"
+      log "  • Kanban boards: issue added directly to board"
+      log "  • No active sprint: issue added to backlog"
       exit
     end
     
     opts.on("-v", "--version", "Show version") do
-      log "Jira Ticket"
+      log "Issue"
       exit
     end
   end.parse!
@@ -58,32 +58,32 @@ def create_jira_ticket_command
   issue_type = options[:type] || config.jira.default_issue_type
   assignee_name = config.jira.assignee_name
 
-  jira_client = JiraClient.build_from_config!(config)
+  issue_client = JiraClient.build_from_config!(config)
   
-  validate_create_jira_ticket_command!(title:, board_name:, issue_type:, assignee_name:)
+  validate_create_issue_command!(title:, board_name:, issue_type:, assignee_name:)
 
-  log "🚀 Creating Jira ticket"
+  log "🚀 Creating Issue"
   log "Board: #{board_name}"
   log "Title: #{title}"
   log "Type: #{issue_type}"
   log "Assignee: #{assignee_name}"
   log ""
   
-  create_jira_ticket_service = CreateJiraTicketService.new(
+  create_issue_service = CreateIssueService.new(
     title:,
     board_name:,
     issue_type:,
     assignee_name:,
-    jira_client:
+    issue_client:
   )
   
-  create_jira_ticket_service.call
+  create_issue_service.call
 end
 
-def validate_create_jira_ticket_command!(title:, board_name:, issue_type:, assignee_name:)
+def validate_create_issue_command!(title:, board_name:, issue_type:, assignee_name:)
 
   if title.nil? || title.strip.empty?
-    log_error "Ticket title is required"
+    log_error "Issue title is required"
     exit 1
   end
   

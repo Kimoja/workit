@@ -1,6 +1,6 @@
 
 require_relative 'base_client'
-require_relative '../models/jira_ticket'
+require_relative '../models/jira_issue'
 
 class JiraClient < BaseClient
   def self.build_from_config!(config)
@@ -35,12 +35,12 @@ class JiraClient < BaseClient
     super(url, Base64.strict_encode64("#{email}:#{token}"))
   end
 
-  def fetch_ticket(key)
-    map_ticket(get("/rest/api/2/issue/#{key}"))
+  def fetch_issue(key)
+    map_issue(get("/rest/api/2/issue/#{key}"))
   end
 
-  def create_ticket(payload)
-    map_ticket(post('/rest/api/2/issue', payload))
+  def create_issue(payload)
+    map_issue(post('/rest/api/2/issue', payload))
   end
 
   def fetch_boards
@@ -89,7 +89,7 @@ class JiraClient < BaseClient
     end
   end
 
-  def map_ticket(raw_data)
-    JiraTicket.new(raw_data)
+  def map_issue(raw_data)
+    JiraIssue.new(raw_data)
   end
 end

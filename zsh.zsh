@@ -2,10 +2,9 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 COMMAND_SCRIPT="${SCRIPT_DIR}/command.rb"
 
-jira-ticket() {
-    ruby "$COMMAND_SCRIPT" "create_jira_ticket_command" "$@"
+issue() {
+    ruby "$COMMAND_SCRIPT" "create_issue_command" "$@"
 }
-alias ticket='jira-ticket'
 
 git-flow() {
     ruby "$COMMAND_SCRIPT" "create_git_flow_command" "$@"

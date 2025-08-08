@@ -1,25 +1,4 @@
 {
-  "board_id_kraft": {
-    "id": 53,
-    "type": "scrum"
-  },
-  "board_info_53": {
-    "type": "scrum",
-    "project_key": "KRAFT"
-  },
-  "issue_types_KRAFT": [
-    "Epic",
-    "Story",
-    "Bug",
-    "Spike",
-    "Tâche",
-    "Technical Story",
-    "Sous-tâche"
-  ],
-  "user_id_carrilho_joakim": {
-    "account_id": "63c03f3550b9490924dcfd31",
-    "display_name": "Carrilho Joakim"
-  },
   "board_id_bt": {
     "id": 22,
     "type": "kanban"
@@ -68,5 +47,26 @@
     "Photobooth",
     "Submit a request or incident",
     "Ask a question"
+  ],
+  "user_id_carrilho_joakim": {
+    "account_id": "63c03f3550b9490924dcfd31",
+    "display_name": "Carrilho Joakim"
+  },
+  "board_id_kraft": {
+    "id": 53,
+    "type": "scrum"
+  },
+  "board_info_53": {
+    "type": "scrum",
+    "project_key": "KRAFT"
+  },
+  "issue_types_KRAFT": [
+    "Epic",
+    "Story",
+    "Bug",
+    "Spike",
+    "Tâche",
+    "Technical Story",
+    "Sous-tâche"
   ]
 }

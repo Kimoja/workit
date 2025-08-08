@@ -5,8 +5,8 @@ require_relative 'deps'
 class JiraGitWorkflow
   include GitConcern
 
-  def initialize(jira_ticket)
-    @jira_ticket = jira_ticket
+  def initialize(issue)
+    @issue = issue
     @jira_url = ENV['JIRA_URL'] || raise('JIRA_URL environment variable is required')
     @jira_user = ENV['JIRA_USER'] || raise('JIRA_USER environment variable is required')
     @jira_token = ENV['JIRA_TOKEN'] || raise('JIRA_TOKEN environment variable is required')
@@ -18,7 +18,7 @@ class JiraGitWorkflow
     init_github_repo_info
     git_commit_if_changes
     switch_to_master
-    ticket_data = fetch_jira_ticket
+    ticket_data = fetch_issue
     branch_name = git_create_branch_name(ticket_data)
     create_and_checkout_branch(branch_name)
     commit_message = create_commit_message(ticket_data)
@@ -44,10 +44,10 @@ class JiraGitWorkflow
     end
   end
 
-  def fetch_jira_ticket
-    puts "Fetching Jira ticket: #{@jira_ticket}"
+  def fetch_issue
+    puts "Fetching Jira ticket: #{@issue}"
     
-    uri = URI("#{@jira_url}/rest/api/2/issue/#{@jira_ticket}")
+    uri = URI("#{@jira_url}/rest/api/2/issue/#{@issue}")
     
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = uri.scheme == 'https'
@@ -91,7 +91,7 @@ class JiraGitWorkflow
   def create_commit_message(ticket_data)
     issue_type = ticket_data.dig('fields', 'issuetype', 'name')&.downcase
     title = (ticket_data.dig('fields', 'summary') || '').gsub(/^\[.*?\]\s*/, '')
-    ticket_key = @jira_ticket.upcase
+    ticket_key = @issue.upcase
     
     # Determine type prefix
     type_prefix = issue_type == 'bug' ? '[FIX]' : '[FEAT]'
@@ -164,7 +164,7 @@ class JiraGitWorkflow
   def prepare_pr_description(ticket_data)
     template = fetch_pr_template
     issue_type = ticket_data.dig('fields', 'issuetype', 'name')&.downcase
-    ticket_key = @jira_ticket.upcase
+    ticket_key = @issue.upcase
     jira_link = "#{@jira_url}/browse/#{ticket_key}"
     
     # Cocher la bonne case selon le type de ticket
@@ -254,7 +254,7 @@ def main
     opts.banner = "Usage: #{$0} [options]"
     
     opts.on('-t', '--jira-ticket TICKET', 'Jira ticket (e.g., KRAFT-3735)') do |ticket|
-      options[:jira_ticket] = ticket
+      options[:issue] = ticket
     end
     
     opts.on('-h', '--help', 'Show this help') do
@@ -263,14 +263,14 @@ def main
     end
   end.parse!
 
-  unless options[:jira_ticket]
+  unless options[:issue]
     puts "Error: --jira-ticket is required"
     puts "Usage: #{$0} --jira-ticket KRAFT-3735"
     exit 1
   end
 
   begin
-    workflow = JiraGitWorkflow.new(options[:jira_ticket])
+    workflow = JiraGitWorkflow.new(options[:issue])
     workflow.run
     puts "Workflow completed successfully!"
   rescue => e

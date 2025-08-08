@@ -1,7 +1,7 @@
 require_relative 'base_service'
 
 class CreateGitFlowService < BaseService
-  attr_reader :branch_name, :jira_ticket, :jira_client, :github_client
+  attr_reader :branch_name, :issue_key, :issue_client, :github_client
 
   def call
     git_setup_branch_workflow(branch_name, ask_if_exists: true)
@@ -14,24 +14,24 @@ class CreateGitFlowService < BaseService
 
   private
 
-  def with_ticket
-    !!jira_ticket
+  def with_issue
+    !!issue_key
   end
 
-  def ticket 
-    @ticket ||= with_ticket ? fetch_jira_ticket : nil
+  def issue 
+    @issue ||= with_issue ? fetch_issue : nil
   end
 
   def branch_name
-    @branch_name ||= with_ticket ? create_branch_name_from_ticket : raise("Branch name is required")
+    @branch_name ||= with_issue ? create_branch_name_from_issue : raise("Branch name is required")
   end
 
   def commit_message
-    @commit_message ||= with_ticket ? create_commit_message_from_ticket : create_commit_message_from_branch_name
+    @commit_message ||= with_issue ? create_commit_message_from_issue : create_commit_message_from_branch_name
   end
 
   def description
-    @description ||= with_ticket ? ticket.description : commit_message
+    @description ||= with_issue ? issue.description : commit_message
   end
 
   def github_repo_info
@@ -39,12 +39,12 @@ class CreateGitFlowService < BaseService
   end
 
   def issue_type
-    @issue_type ||=  with_ticket ? ticket.issue_type : get_issue_type_from_branch_name
+    @issue_type ||=  with_issue ? issue.issue_type : get_issue_type_from_branch_name
   end
 
-  def create_branch_name_from_ticket
-    prefix = ticket.issue_type == 'bug' ? 'fix/' : 'feat/'
-    branch_suffix = ticket.title
+  def create_branch_name_from_issue
+    prefix = issue.issue_type == 'bug' ? 'fix/' : 'feat/'
+    branch_suffix = issue.title
       .downcase
       .gsub(/\s+/, '-')
       .gsub(/-+/, '-')
@@ -57,10 +57,10 @@ class CreateGitFlowService < BaseService
     branch_name
   end
 
-  def fetch_jira_ticket
-    log "Fetching Jira ticket: #{jira_ticket}"
+  def fetch_issue
+    log "Fetching Issue: #{issue_key}"
 
-    jira_client.fetch_ticket(jira_ticket)
+    issue_client.fetch_issue(issue_key)
   end
 
   def create_commit_message_from_branch_name
@@ -79,10 +79,10 @@ class CreateGitFlowService < BaseService
     end
   end
 
-  def create_commit_message_from_ticket
-    type_prefix = ticket.issue_type == 'bug' ? '[FIX]' : '[FEAT]'
+  def create_commit_message_from_issue
+    type_prefix = issue.issue_type == 'bug' ? '[FIX]' : '[FEAT]'
     
-    commit_message = "#{type_prefix} #{ticket.key} - #{ticket.title}"
+    commit_message = "#{type_prefix} #{issue.key} - #{issue.title}"
     log "Commit message: #{commit_message}"
 
     commit_message
@@ -132,8 +132,8 @@ class CreateGitFlowService < BaseService
       template = template.gsub(/- \[ \] [Nn]ouvelle/, '- [x] Nouvelle fonctionnalité')
     end
     
-    if with_ticket && ticket.key && ticket.url
-      template = template.gsub(/(##\s*📔?\s*[Tt]icket[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n- [#{ticket.key}](#{ticket.url})\n\n")
+    if with_issue && issue.key && issue.url
+      template = template.gsub(/(##\s*📔?\s*[Tt]icket[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n- [#{issue.key}](#{issue.url})\n\n")
     end
     
     if description

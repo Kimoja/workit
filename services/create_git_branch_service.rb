@@ -14,15 +14,13 @@ class CreateGitBranchService
     git_commit_if_changes
     git_switch_to_head_branch
 
-    binding.pry
-    raise
     if @branch_name
       branch_name = @branch_name
-      commit_message = branch_name
+      commit_message = create_commit_message_from_branch_name
     else
       ticket_data = fetch_jira_ticket
-      branch_name = git_create_branch_name_from_jira_ticket(ticket_data)
-      commit_message = create_commit_message_from_jira_ticket(ticket_data)
+      branch_name = create_branch_name_from_ticket(ticket_data)
+      commit_message = create_commit_message_from_ticket(ticket_data)
     end
 
     git_create_branch(branch_name)
@@ -62,7 +60,7 @@ class CreateGitBranchService
     @jira_client.get("/rest/api/2/issue/#{@jira_ticket}")
   end
 
-  def git_create_branch_name_from_jira_ticket(ticket_data)
+  def create_branch_name_from_ticket(ticket_data)
     issue_type = ticket_data.dig('fields', 'issuetype', 'name')&.downcase
     title = ticket_data.dig('fields', 'summary') || ''
     
@@ -84,7 +82,23 @@ class CreateGitBranchService
     branch_name
   end 
 
-  def create_commit_message_from_jira_ticket(ticket_data)
+  def create_commit_message_from_branch_name(ticket_data)
+    # Extract prefix and suffix
+    if @branch_name.match(/^(fix|feat|feature|bug|hotfix|chore|docs|style|refactor|test)\/(.+)$/)
+      prefix = $1.upcase
+      suffix = $2
+      
+      # Transform suffix: replace dashes with spaces and capitalize
+      title = suffix.gsub('-', ' ').split.map(&:capitalize).join(' ')
+      
+      "[#{prefix}] #{title}"
+    else
+      # If no recognized prefix, just transform the whole string
+      @branch_name.gsub('-', ' ').split.map(&:capitalize).join(' ')
+    end
+  end
+
+  def create_commit_message_from_ticket(ticket_data)
     issue_type = ticket_data.dig('fields', 'issuetype', 'name')&.downcase
     title = (ticket_data.dig('fields', 'summary') || '').gsub(/^\[.*?\]\s*/, '')
     ticket_key = @jira_ticket.upcase
@@ -102,12 +116,11 @@ class CreateGitBranchService
     system("git commit --allow-empty -m '#{message}'") || raise('Failed to create empty commit')
   end
 
-  def create_pull_request(ticket_data, commit_message)
+  def create_pull_request(github_repo, ticket_data, commit_message)
     puts "Creating pull request..."
     
-    # Get current branch
     current_branch = `git branch --show-current`.strip
-    base_branch = 'master' # or 'main' depending on your repo
+    base_branch = git_head_branch_name
     
     pr_description = prepare_pr_description(ticket_data)
     
@@ -118,19 +131,8 @@ class CreateGitBranchService
       body: pr_description
     }
     
-    uri = URI("https://api.github.com/repos/#{@github_repo[:owner]}/#{@github_repo[:repo]}/pulls")
-    
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    
-    request = Net::HTTP::Post.new(uri)
-    request['Authorization'] = "token #{@github_token}"
-    request['Accept'] = 'application/vnd.github.v3+json'
-    request['Content-Type'] = 'application/json'
-    request.body = pr_data.to_json
-    
-    response = http.request(request)
-    
+    github_client.post("/repos/#{github_repo[:owner]}/#{github_repo[:repo]}/pulls", pr_data)
+
     if response.code == '201'
       pr_response = JSON.parse(response.body)
       puts "Pull request created successfully: #{pr_response['html_url']}"

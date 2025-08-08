@@ -72,7 +72,7 @@ def git_create_branch(branch_name, ask_if_exists: false)
   if branch_exists
     raise("Branch: #{branch_name} already exists") unless ask_if_exists
 
-    log_warning "Branch '#{branch_name}' already exists."
+    log "Branch '#{branch_name}' already exists"
 
     yes_no(
       text: "Do you want to use the existing branch?", 

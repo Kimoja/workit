@@ -7,6 +7,7 @@ begin
   require_relative "commands/#{func}"
   eval(func)
 rescue => e
+  binding.pry
   log_error "#{e.message}"
   e.backtrace[0..20].each { |line| log "#{line}" }
 

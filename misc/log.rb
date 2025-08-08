@@ -7,7 +7,7 @@ def log_success(message)
 end
 
 def log_warning(message)
-  log("⚠️ Attention: #{message}")
+  log("⚠️ Warning: #{message}")
 end
 
 def log_error(message)

@@ -14,7 +14,7 @@ class CreateGitBranchService
     git_commit_if_changes
     git_switch_to_main_branch
     binding.pry 
-    raise
+    # raise
     git_create_branch(branch_name, ask_if_exists: true)
     git_empty_commit(commit_message)
     git_push_branch

@@ -4,7 +4,7 @@ require_relative 'deps'
 
 begin
   func = ARGV.shift
-  require "commands/#{func}"
+  require_relative "commands/#{func}"
   eval(func)
 rescue => e
   log_error "#{e.message}"

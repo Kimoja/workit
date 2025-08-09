@@ -1,0 +1,59 @@
+{
+  "jira": {
+    "url": "https://cheerz0.atlassian.net",
+    "email": "joakim.carrilho@cheerz.com",
+    "token": "",
+    "default_board": "KRAFT",
+    "default_issue_type": "Tâche",
+    "assignee_name": "Carrilho Joakim",
+    "base_script": "/Users/joakimcarrilho/dev/zsh/"
+  },
+  "github": {
+    "token": ""
+  },
+  "browser_aliases": {
+    "gp": "https://github.com/pulls",
+    "gr": "https://github.com/pulls/review-requested",
+
+    "gc": "https://github.com/cheerz/cheerz/pulls",
+    "gk": "https://github.com/cheerz/kustom-backend/pulls",
+    "gko": "https://github.com/cheerz/konnektor/pulls",
+    "gf": "https://github.com/cheerz/fotom/pulls",
+    "gku": "https://github.com/cheerz/kund/pulls",
+
+    "c": "https://staging1.cheerz.com/admin_panel/products",
+    "c1": "https://staging1.cheerz.com/admin_panel/products",
+    "c2": "https://staging2.cheerz.com/admin_panel/products",
+    "c3": "https://staging3.cheerz.com/admin_panel/products",
+    "c4": "https://staging4.cheerz.com/admin_panel/products",
+    "c5": "https://staging5.cheerz.com/admin_panel/products",
+    "c6": "https://staging6.cheerz.com/admin_panel/products",
+    "c7": "https://staging7.cheerz.com/admin_panel/products",
+    "c8": "https://staging8.cheerz.com/admin_panel/products",
+    "cs": "https://staging1.cheerz.com/",
+    "cs1": "https://staging1.cheerz.com/",
+    "cs2": "https://staging2.cheerz.com/",
+    "cs3": "https://staging3.cheerz.com/",
+    "cs4": "https://staging4.cheerz.com/",
+    "cs5": "https://staging5.cheerz.com/",
+    "cs6": "https://staging6.cheerz.com/",
+    "cs7": "https://staging7.cheerz.com/",
+    "cs8": "https://staging8.cheerz.com/",
+
+    "cp": "https://staging1.cheerz.com/admin_panel/products",
+    "csp": "https://staging1.cheerz.com/",
+    "cheerz": "https://staging1.cheerz.com/",
+
+    "k": "https://kustom-staging.cheerz.com/admin_panel",
+    "k1": "https://kustom-staging.cheerz.com/admin_panel",
+    "k2": "https://kustom-staging2.cheerz.com/admin_panel",
+    "kp": "https://kustom.cheerz.com/admin_panel",
+
+    "ko": "https://staging1.konnektor.io/admin/print_units",
+    "ko1": "https://staging1.konnektor.io/admin/print_units",
+    "ko2": "https://staging2.konnektor.io/admin/print_units",
+    "kop": "https://www.konnektor.io/admin",
+
+    "dd": "https://app.datadoghq.eu/apm/home?env=production"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "board_id_bt": {
+    "id": 22,
+    "type": "kanban"
+  },
+  "board_info_22": {
+    "type": "kanban",
+    "project_key": "BT"
+  },
+  "issue_types_BT": [
+    "Tâche",
+    "Amélioration",
+    "Bug",
+    "Epic",
+    "Technical Story",
+    "Conception",
+    "Sous-tâche",
+    "Test",
+    "Test Set",
+    "Test Plan",
+    "Test Execution",
+    "Precondition",
+    "Story",
+    "Nouvelle fonctionnalité",
+    "Spike",
+    "Technical Debt ",
+    "Experience issue",
+    "Opportunity",
+    "Retour tests",
+    "Demande de matériel",
+    "Problème informatique",
+    "Demande de licence",
+    "Arrivées / Départs",
+    "Téléphonie",
+    "[System] Incident",
+    "[System] Post-incident review",
+    "[System] Service request",
+    "[System] Service request with approvals",
+    "[System] Change",
+    "[System] Problem",
+    "Report a maintenance issue",
+    "Request a move",
+    "Request an event",
+    "Emailed request",
+    "Questions for facilities",
+    "GMAO",
+    "Photobooth",
+    "Submit a request or incident",
+    "Ask a question"
+  ],
+  "user_id_carrilho_joakim": {
+    "account_id": "63c03f3550b9490924dcfd31",
+    "display_name": "Carrilho Joakim"
+  },
+  "board_id_kraft": {
+    "id": 53,
+    "type": "scrum"
+  },
+  "board_info_53": {
+    "type": "scrum",
+    "project_key": "KRAFT"
+  },
+  "issue_types_KRAFT": [
+    "Epic",
+    "Story",
+    "Bug",
+    "Spike",
+    "Tâche",
+    "Technical Story",
+    "Sous-tâche"
+  ]
+}

@@ -1,14 +1,38 @@
 require_relative 'base_service'
 
 class CreateGitFlowService < BaseService
-  attr_reader :branch_name, :issue_key, :issue_client, :git_repo_client, :repo, :owner
+
+  attr_reader(
+    :branch_name, 
+    :issue_key, 
+    :issue_client, 
+    :git_repo_client, 
+    :repo, 
+    :owner,
+    :create_pull_request_service_factory
+  )
 
   def call
-    setup_branch_workflow
-    git_commit_empty(commit_message)
+    git_navigate_to_repo!
+
+    if using_current_branch?
+      log_info "Using current git branch: #{branch_name}"
+      check_current_branch_not_protected!
+      git_commit_wip_if_changes
+    else
+      git_stash_changes_if_protected_branch
+      git_commit_wip_if_changes
+      if git_branch_exists?(branch_name)
+        checkout_to_existing_branch 
+      else 
+        checkout_to_base_branch
+        git_create_branch(branch_name)
+      end
+    end
+    
+    git_commit(commit_message, "--allow-empty")
     git_push_branch
     pr_url = create_pull_request
-    
     open_browser(pr_url)
   end
 
@@ -23,7 +47,7 @@ class CreateGitFlowService < BaseService
   end
 
   def branch_name
-    @branch_name ||= with_issue ? create_branch_name_from_issue : raise("Branch name is required")
+    @branch_name ||= with_issue ? create_branch_name_from_issue : raise("Branch name is required when no issue is provided")
   end
 
   def commit_message
@@ -38,23 +62,60 @@ class CreateGitFlowService < BaseService
     @issue_type ||=  with_issue ? issue.issue_type : get_issue_type_from_branch_name
   end
 
-  def setup_branch_workflow
-    git_navigate_to_repo!
-    git_commit_if_changes
-    # Si aucune branche, demander à l'utilisateur d'utiliser la branche actuelle
-    # Sinon, demande d'utiliser master ou la branche actuelle
-    if git_current_branch != git_main_branch_name
-      yes_no(
-        text: "Do you want to use '#{git_main_branch_name}' as base branche?", 
-        yes: proc {
-          git_switch_to_main_branch
-        }
-      )
-    end
-
-    git_create_branch(branch_name, ask_if_exists: true)
+  def using_current_branch?
+    return @using_current_branch if defined?(@using_current_branch)
+    @using_current_branch = branch_name == git_current_branch
   end
-  
+
+  def check_current_branch_not_protected!
+    return unless git_branch_protected?(branch_name)
+
+    log_error "Current branch '#{branch_name}' is protected. Please switch to another branch or create a new one."
+    exit 1
+  end
+
+  def checkout_to_existing_branch
+    log "Branch '#{branch_name}' already exists"
+    
+    yes_no(
+      text: "Do you want to use the existing branch?", 
+      yes: proc {
+        if branch_name != git_current_branch
+          log "Switching to existing branch '#{branch_name}'..."
+          git_checkout(branch_name)
+        else
+          log "Already on branch '#{branch_name}'"
+        end
+      }, 
+      no: proc {
+        log_error "Operation cancelled"
+        exit 1
+      }
+    )
+  end
+
+  def checkout_to_base_branch
+    main_branch = git_main_branch_name
+    current_branch = git_current_branch
+    
+    return if main_branch == current_branch
+
+    yes_no(
+      text: "Do you want to use '#{main_branch}' as base branch or use the current branch '#{current_branch}'? (y for #{main_branch}, n for current)",
+      yes: proc { 
+        if current_branch != main_branch
+          log "Switching to #{main_branch} as base branch..."
+          git_checkout(main_branch) 
+        else
+          log "Already on #{main_branch}"
+        end
+      },
+      no: proc {
+        log "Using current branch '#{current_branch}' as base branch..."
+      }
+    )
+  end
+
   def create_branch_name_from_issue
     prefix = issue.issue_type == 'bug' ? 'fix/' : 'feat/'
     branch_suffix = issue.title
@@ -112,99 +173,17 @@ class CreateGitFlowService < BaseService
   end
 
   def create_pull_request
-    log "Creating pull request..."
-    binding.pry 
-    raise
-    pull_request = git_repo_client.create_pull_request(
-      owner, 
-      repo, 
-      {
-        title: commit_message,
-        head: branch_name,
-        base: git_main_branch_name,
-        body: prepare_pr_description
-      }
+    create_pull_request_service_factory.call(
+      title: commit_message,
+      head: branch_name,
+      base: git_main_branch_name,
+      description:,
+      issue_type:,
+      git_repo_client:, 
+      repo:, 
+      owner:,
+      issue:,
     )
-
-    url = pull_request['html_url']
-    log "Pull request created successfully: #{url}"
-
-    url
-  rescue => e
-    log_error "Creating pull request: #{e.message}"
-    exit 1
   end
 
-  def prepare_pr_description
-    template = fetch_pr_template
-    
-    if issue_type == 'bug'
-      template = template.gsub(/- \[ \] [Bb]ug/, '- [x] Bug fix')
-    elsif issue_type == 'bump'
-      template = template.gsub(/- \[ \] .*?(gems|dependancies|dépendance).*?$/, '- [x] Mise à jour de gems')
-    else
-      template = template.gsub(/- \[ \] [Nn]ouvelle/, '- [x] Nouvelle fonctionnalité')
-    end
-    
-    if with_issue && issue.key && issue.url
-      template = template.gsub(/(##\s*📔?\s*[Tt]icket[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n- [#{issue.key}](#{issue.url})\n\n")
-    end
-    
-    if description
-      clean_description = description.gsub(/\{[^}]+\}/, '').strip
-      template = template.gsub(/(##\s*📓?\s*[Dd]escription[^:\n]*:?)[\s\-]*(?=[^\s\-]|$)/mi, "\\1\n\n#{clean_description}\n\n")
-    end
-    
-    template
-  end
-
-  def fetch_pr_template
-    log "Fetching pull request template from local file..."
-    
-    template_path = File.join(Dir.pwd, 'pull_request_template.md')
-    
-    if File.exist?(template_path)
-      log "Found PR template at: #{template_path}"
-      File.read(template_path)
-    else
-      log "Warning: Could not find PR template at #{template_path}, using default template"
-      get_default_template
-    end
-  rescue => e
-    log_error "Reading PR template file: #{e.message}"
-    log "Using default template instead"
-    get_default_template
-  end
-  
-  def get_default_template
-    default_template_path = File.join(Dir.pwd, 'resources', 'default_pull_request_template.md')
-    
-    if File.exist?(default_template_path)
-      log "Using default template from: #{default_template_path}"
-      File.read(default_template_path)
-    else
-      log_warning "Default template not found at #{default_template_path}, using fallback template"
-      get_fallback_template
-    end
-  rescue => e
-    log_error "Reading default template file: #{e.message}"
-    log "Using fallback template instead"
-    get_fallback_template
-  end
-  
-  def get_fallback_template
-    <<~TEMPLATE
-      ## Description
-      Brief description of the changes made.
-
-      ## Changes
-      - List of changes
-
-      ## Testing
-      How was this tested?
-
-      ## Notes
-      Any additional notes or considerations.
-    TEMPLATE
-  end
 end

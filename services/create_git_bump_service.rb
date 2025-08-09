@@ -6,7 +6,7 @@ class CreateGitBumpService < BaseService
     git_navigate_to_repo!
     github_repo = init_github_repo_info
     git_commit_if_changes
-    git_switch_to_main_branch
+    git_checkout_to_main
     git_create_branch(@branch_name, ask_if_exists: true)
 
     binding.pry 

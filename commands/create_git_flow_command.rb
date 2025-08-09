@@ -1,6 +1,7 @@
 require_relative '../clients/jira_client'
 require_relative '../clients/github_client'
 require_relative '../services/create_git_flow_service'
+require_relative '../services/create_pull_request_service'
 
 def create_git_flow_command
   options = {}
@@ -9,7 +10,7 @@ def create_git_flow_command
     opts.banner = "Usage: [OPTIONS] \"BRANCH_NAME\""
     opts.separator ""
     opts.separator "Arguments:"
-    opts.separator "  BRANCH_NAME  Branch name (optional if --issue is defined)"
+    opts.separator "  BRANCH_NAME  Branch name (optional, if not provided, will use the current branch name unless issue is specified)"
     opts.separator ""
     opts.separator "Options:"
     
@@ -23,6 +24,7 @@ def create_git_flow_command
       log "Examples:"
       log "  git-flow \"Fix login bug\""
       log "  git-flow -t KRAFT-3735"
+      log "  git-flow"
       log ""
       log "Configuration:"
       log "  The command uses the config.json configuration file"
@@ -35,7 +37,7 @@ def create_git_flow_command
     end
   end.parse!
 
-  branch_name = ARGV[0]
+  branch_name = ARGV[0] || git_current_branch
   issue = options[:issue]
   last_issue = cache_get("last_issue")&.fetch("issue_key")
 
@@ -50,9 +52,7 @@ def create_git_flow_command
   end
 
   issue_client = JiraClient.build_from_config!(config)
-  github_client = GithubClient.build_from_config!(config)
-
-  validate_git_flow_command_inputs!(branch_name:, issue:)
+  git_repo_client = GithubClient.build_from_config!(config)
 
   log "🚀 Creating Git flow (Branche and Pull Request)"
   log "Branch name: #{branch_name}"
@@ -62,20 +62,12 @@ def create_git_flow_command
   create_git_flow_service = CreateGitFlowService.new(
     branch_name:,
     issue_key: issue, 
-    github_client:,
+    git_repo_client:,
     repo: github_repo_info[:repo],
     owner: github_repo_info[:owner],
     issue_client:,
+    create_pull_request_service_factory: CreatePullRequestService
   )
 
   create_git_flow_service.call
-end
-
-def validate_git_flow_command_inputs!(branch_name:, issue:)
-  if (branch_name.nil? || branch_name.strip.empty?) && (issue.nil? || issue.strip.empty?)
-    log_error "Branch name or Issue is required"
-    exit 1
-  end
-
-  log_success "Input parameters validated"
 end

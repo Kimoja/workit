@@ -2,6 +2,10 @@ def log(message)
   puts message
 end
 
+def log_info(message)
+  log("ℹ️ #{message}")
+end
+
 def log_success(message)
   log("✅ #{message}")
 end

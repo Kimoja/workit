@@ -1,0 +1,14 @@
+{
+  "jira": {
+    "url": "https://cheerz0.atlassian.net",
+    "email": "joakim.carrilho@cheerz.com",
+    "token": "XXX",
+    "default_board": "KRAFT",
+    "default_issue_type": "Tâche",
+    "assignee_name": "Carrilho Joakim",
+    "base_script": "/Users/joakimcarrilho/dev/zsh/"
+  },
+  "github": {
+    "token": "XXX"
+  }
+}

@@ -1,0 +1,110 @@
+
+
+[user]
+  name = Kimoja
+  email = joakim.carrilho@cheerz.com
+[push]
+  autoSetupRemote = true
+  default = current
+[branch]
+  autoSetupMerge = false
+  autoSetupRebase = never
+[pull]
+  rebase = true
+[rebase]
+  autosquash = true
+[core]
+  autocrlf = input
+  pager = less -FRSX
+  excludesFile = ~/.gitignore
+  editor = "code --wait"
+[fetch]
+  prune = true
+[advice]
+  setUpstreamFailure = false
+  pushNonFastForward = false
+[alias]
+  co = checkout
+  br = branch
+  ci = commit
+  st = status
+  pushf = push --force-with-lease
+  staged = diff --staged
+  conflict = diff --name-only --diff-filter=U
+  previous = checkout -
+  
+  clean-branches = "!f() { \
+      git branch --merged $(git base) | \
+      grep -v \"^\\*\" | \
+      xargs -n 1 git branch -d; \
+  }; f"
+  
+  sync = "!f() { \
+      git fetch origin && \
+      git reset --hard origin/$(git base) && \
+      git clean -f -d; \
+  }; f"
+  
+  amend = "!f() { \
+      git add . && \
+      git commit --amend --no-edit; \
+  }; f" 
+  
+  branch-find = "!f() { \
+      git branch -a | rg -e \"$1\"; \
+  }; f"
+  
+  stash-find = "!f() { \
+      git stash list | rg -e \"$1\"; \
+  }; f"
+  
+  wip = "!f() { \
+      git add . && \
+      git commit -m \"wip\"; \
+  }; f"
+  
+  autosquash = "!f() { \
+      git rebase -i --autosquash $1; \
+  }; f"
+  
+  fixup = "!f() { \
+      git commit --fixup $(git rev-parse HEAD~$1); \
+  }; f"
+  
+  up = "!f() { \
+      git branch --set-upstream-to=origin/$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --abbrev-ref HEAD); \
+  }; f"
+  
+  rsync = "!f() { \
+      branch=$(git rev-parse --abbrev-ref HEAD); \
+      git branch --set-upstream-to=origin/$branch $branch; \
+      git co $(git base); \
+      git pull; \
+      git co $branch; \
+      git pull --rebase; \
+      git rebase $(git base); \
+  }; f"
+  
+  lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+  
+  dig = "!f() { \
+      git log --pretty=format:'%Cred%h%Creset - %Cgreen(%ad)%Creset - %s %C(bold blue)<%an>%Creset' \
+             --abbrev-commit \
+             --date=short \
+             --grep \"$1\" -- $2; \
+  }; f"
+  
+  parent = "!f() { \
+      current=$(git branch --show-current); \
+      for branch in main master develop dev; do \
+          if git show-ref --verify --quiet refs/heads/$branch && [ \"$branch\" != \"$current\" ]; then \
+              merge_base=$(git merge-base HEAD $branch 2>/dev/null); \
+              if [ ! -z \"$merge_base\" ]; then \
+                  commits=$(git rev-list --count $merge_base..HEAD); \
+                  echo \"$branch: $commits commits since $(git log -1 --oneline $merge_base)\"; \
+              fi; \
+          fi; \
+      done | sort -k2 -n | head -1; \
+  }; f"
+  
+  base = "!git parent | cut -d: -f1"

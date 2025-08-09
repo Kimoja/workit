@@ -1,0 +1,24 @@
+def log(message)
+  puts message
+end
+
+def log_info(message)
+  log("ℹ #{message}")
+end
+
+def log_success(message)
+  log("✅ #{message}")
+end
+
+def log_warning(message)
+  log("⚠️ Warning: #{message}")
+end
+
+def log_error(message)
+  play_error_sound
+  log("❌ Erreur: #{message}")
+end
+
+def log_json(json)
+  log JSON.pretty_generate(json)
+end

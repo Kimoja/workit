@@ -1,5 +1,7 @@
 
-class CreatePullRequestService < Service
+
+class CreatePullRequestService < Callable
+  include AttributeInitializer
 
   attr_reader(
     :title,
@@ -80,7 +82,7 @@ class CreatePullRequestService < Service
   end
   
   def get_default_template
-    default_template_path = File.join($cli_path, 'resources', 'default_pull_request_template.md')
+    default_template_path = File.join(APP_PATH, 'resources', 'default_pull_request_template.md')
     
     if File.exist?(default_template_path)
       log_info "Using default template from: #{default_template_path}"

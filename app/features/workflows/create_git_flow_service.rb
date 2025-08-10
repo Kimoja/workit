@@ -1,6 +1,8 @@
 
+
 module Workflows
-  class CreateGitFlowService < Service
+  class CreateGitFlowService < Callable
+    include AttributeInitializer
 
     attr_reader(
       :branch_name, 

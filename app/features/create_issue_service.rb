@@ -1,6 +1,8 @@
 
 
-class CreateIssueService < Service
+class CreateIssueService < Callable
+  include AttributeInitializer
+
   attr_reader :title, :board_name, :issue_type, :assignee_name, :issue_client
 
   def call

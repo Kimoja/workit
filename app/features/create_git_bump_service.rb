@@ -1,5 +1,6 @@
 
-class CreateGitBumpService < Service
+class CreateGitBumpService < Callable
+  include AttributeInitializer
 
   attr_reader(
     :branch_name, 

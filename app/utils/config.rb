@@ -1,10 +1,10 @@
 def config
   return @config if defined?(@config)
 
-  config_path = "#{$cli_path}/config.json"
+  config_path = "#{APP_PATH}/config.json"
 
   unless File.exist?(config_path)
-    log_error "Configuration file '#{$config_path}' not found"
+    log_error "Configuration file '#{config_path}' not found"
     log ""
     log "Create a config.json file with the following structure:"
     log_json(

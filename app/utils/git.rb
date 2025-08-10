@@ -5,6 +5,8 @@ GIT_PROTECTED_BRANCHES = %w[
 ].freeze
 
 def git_navigate_to_repo!
+
+  binding.pry
   if git_repo_exists?('.')
     log_info "Git repository found in current directory"
     return

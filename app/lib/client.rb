@@ -1,9 +1,8 @@
-
 class Client
-  def initialize(base_url, token)
-    @base_url = base_url
-    @token = token
-  end
+  include AttributeInitializer
+  include Utils
+
+  attr_reader :base_url, :token
 
   def get(endpoint)
     request('GET', endpoint)
@@ -14,7 +13,7 @@ class Client
   end
 
   def request(method, endpoint, body = nil)
-    uri = URI("#{@base_url}#{endpoint}")
+    uri = URI("#{base_url}#{endpoint}")
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
 
@@ -31,14 +30,14 @@ class Client
     yield(request)
 
     response = http.request(request)
-    
+
     unless response.is_a?(Net::HTTPSuccess)
       error_msg = begin
         JSON.parse(response.body)['message'] || response.message
-      rescue
+      rescue StandardError
         response.message
       end
-      binding.pry 
+      # binding.pry
       raise "#{self.class} API error (#{response.code}): #{error_msg}"
     end
 

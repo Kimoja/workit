@@ -7,3 +7,4 @@ ruby '3.2.1'
 gem 'zeitwerk'
 
 gem 'pry'
+gem 'rubocop', '~> 1.79'

@@ -1,14 +1,16 @@
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-# Format : nom_de_fonction;nom_commande_ruby;[alias]
+# Format : function_name;ruby_class;[alias]
 ruby_commands=(
-  "issue;create_issue_command"
-  "git-flow;create_git_flow_command;flow"
-  "git-bump;create_git_bump_command;bump"
-  "open-pr;open_pr_command;pr"
-  "open-browser-aliases;open_browser_aliases_command;a"
-  "open-file-explorer-aliases;open_file_explorer_aliases_command;o"
+  "setup-git-branch;SetupGitBranchCommand;branch"
+  "setup-git-branch-issue;SetupGitBranchFromIssueCommand;branch-issue"
+  "setup-git-pull-request;SetupGitPullRequestCommand;pr"
+  "issue;CreateIssueCommand"
+  "setup-workflow;SetupWorkflowCommand;flow"
+  "git-bump;CreateGitBumpCommand;bump"
+  "open-browser-aliases;OpenBrowserAliasesCommand;a"
+  "open-file-explorer-aliases;OpenFileExplorerAliasesCommand;o"
 )
 
 for entry in "${ruby_commands[@]}"; do
@@ -37,7 +39,6 @@ commit() {
   git add .
   git commit -m "$*"
 }
-alias co='git co'
 alias push='git pushf'
 # alias rebase='TMP_REBASE_BRANCH=$(git rev-parse --abbrev-ref HEAD); git co master; git pull; git co $TMP_REBASE_BRANCH; git rebase master'
 alias rebase='git rsync'

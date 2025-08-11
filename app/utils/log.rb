@@ -1,24 +1,30 @@
-def log(message)
-  puts message
-end
+module Utils
+  module Log
+    extend self
 
-def log_info(message)
-  log("ℹ #{message}")
-end
+    def log(message)
+      puts message
+    end
 
-def log_success(message)
-  log("✅ #{message}")
-end
+    def info(message)
+      Log.log("ℹ #{message}")
+    end
 
-def log_warning(message)
-  log("⚠️ Warning: #{message}")
-end
+    def success(message)
+      Log.log("✅ #{message}")
+    end
 
-def log_error(message)
-  play_error_sound
-  log("❌ Erreur: #{message}")
-end
+    def warn(message)
+      Log.log("⚠️ Warning: #{message}")
+    end
 
-def log_json(json)
-  log JSON.pretty_generate(json)
+    def error(message)
+      Play.error
+      Log.log("❌ Erreur: #{message}")
+    end
+
+    def json(json)
+      Log.log JSON.pretty_generate(json)
+    end
+  end
 end

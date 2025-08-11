@@ -1,153 +1,203 @@
-GIT_PROTECTED_BRANCHES = %w[
-  main master develop dev development
-  staging stage production prod release
-  hotfix integration
-].freeze
+module Utils
+  module Git
+    extend self
 
-def git_navigate_to_repo!
+    GIT_PROTECTED_BRANCHES = %w[
+      main master develop dev development
+      staging stage production prod release
+      hotfix integration
+    ].freeze
 
-  binding.pry
-  if git_repo_exists?('.')
-    log_info "Git repository found in current directory"
-    return
-  end
+    ### REPO ###
+    def navigate_to_repo(&fallback)
+      if repo_exists?('.')
+        Log.info 'Git repository found in current directory'
+        return
+      end
 
-  log_info "No git repository in current directory, searching in subdirectories..."
-  
-  Dir.glob('*/').each do |dir|
-    if git_repo_exists?(dir)
-      log_info "Git repository found in #{dir}"
-      Dir.chdir(dir)
-      return
+      Log.info 'No git repository in current directory, searching in subdirectories...'
+
+      Dir.glob('*/').each do |dir|
+        next unless repo_exists?(dir)
+
+        Log.info "Git repository found in #{dir}"
+        Dir.chdir(dir)
+        return
+      end
+
+      apply_fallback!(
+        fallback,
+        "No git repository found"
+      )
+    end
+
+    def repo_exists?(path)
+      File.directory?(File.join(path, '.git'))
+    end
+
+    def repo_info(&fallback)
+      remote_url = `git config --get remote.origin.url`.strip
+
+      match =
+        remote_url.match(%r{\Agit@([^:]+):([^/]+)/([^.]+)(?:\.git)?\z}) ||
+        remote_url.match(%r{\Ahttps?://([^/]+)/([^/]+)/([^.]+)(?:\.git)?\z})
+
+      if match
+        provider, owner, repo = match.captures
+        return { provider: provider, owner: owner, repo: repo }
+      end
+
+      apply_fallback!(
+        fallback,
+        "Unable to parse repository information from remote URL: #{remote_url}"
+      )
+    end
+
+    ### BRANCH ###
+
+    def branch_exists?(branch_name)
+      system("git show-ref --verify --quiet refs/heads/#{branch_name}")
+    end
+
+    def branch_protected?(branch)
+      GIT_PROTECTED_BRANCHES.include?(branch)
+    end
+
+    def checkout(branch_name, &fallback)
+      Log.info "Switching to #{branch_name} branch..."
+
+      system("git checkout #{branch_name}") || apply_fallback!(
+        fallback,
+        "Failed to switch to #{branch_name} branch"
+      )
+    end
+
+    def main_branch
+      result = `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null`.strip
+
+      return result.split('/').last if $CHILD_STATUS.success? && !result.empty?
+
+      branches = `git branch -r`.lines.map(&:strip)
+
+      if branches.any? { |branch| branch.include?('origin/main') }
+        return 'main'
+      elsif branches.any? { |branch| branch.include?('origin/master') }
+        return 'master'
+      end
+
+      branch = current_branch
+      branch.empty? ? 'main' : branch
+    end
+
+    def current_branch
+      `git branch --show-current`.strip
+    end
+
+    def create_branch(branch_name, &fallback)
+      Log.info "Creating branch: '#{branch_name}'"
+
+      system("git checkout -b #{branch_name}") || apply_fallback!(
+        fallback,
+        "Failed to create branch: #{branch_name}"
+      )
+    end
+
+    def pull(&fallback)
+      Log.info 'Pulling latest changes with rebase...'
+
+      system('git pull --rebase') || apply_fallback!(
+        fallback,
+        "Failed to pull latest changes for branch '#{current_branch}'"
+      )
+    end
+
+    def push(&fallback)
+      Log.info 'Pushing branch...'
+
+      system('git push -f') || apply_fallback!(
+        fallback,
+        'Failed to push branch'
+      )
+    end
+
+    def base_branch(&fallback)
+      Log.info 'Searching for the base branch from remote branches...'
+
+      # Récupérer toutes les branches remote
+      all_remote_branches = `git branch -r --format='%(refname:short)'`.lines.map(&:strip)
+
+      # Filtrer les branches remote pour exclure HEAD et la branche courante
+      current_branch_name = current_branch
+      all_remote_branches = all_remote_branches.reject do |branch|
+        branch.include?('/HEAD') || branch == "origin/#{current_branch_name}"
+      end
+
+      results = []
+
+      all_remote_branches.each do |remote_branch|
+        merge_base = `git merge-base HEAD #{remote_branch} 2>/dev/null`.strip
+        next if merge_base.empty?
+
+        commits_ahead = `git rev-list --count #{merge_base}..HEAD`.strip.to_i
+        commits_behind = `git rev-list --count HEAD..#{merge_base}`.strip.to_i
+        commit_info = `git log -1 --format="%h %s %an %ad" --date=short #{merge_base}`.strip
+
+        results << {
+          branch: remote_branch,
+          merge_base: merge_base,
+          commits_ahead: commits_ahead,
+          commits_behind: commits_behind,
+          commit_info: commit_info
+        }
+      end
+
+      results.min_by { |r| r[:commits_ahead] } || apply_fallback!(
+        fallback,
+        'Failed to find base branch'
+      )
+    end
+
+    ### CHANGES ###
+
+    def changes?
+      !`git status --porcelain`.strip.empty?
+    end
+
+    def stash_changes(&fallback)
+      timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
+      branch_name = current_branch
+      stash_message = "Auto-stash from #{branch_name} - #{timestamp}"
+
+      Log.info "Stashing changes with message: '#{stash_message}'"
+
+      system("git stash push -m '#{stash_message}'") || apply_fallback!(
+        fallback,
+        'Failed to stash changes'
+      )
+    end
+
+    def commit(message, *options, &fallback)
+      Log.info "Creating commit with message: '#{message}'"
+
+      system("git add . && git commit -m '#{message}' #{options.join}") || apply_fallback!(
+        fallback,
+        'Failed to create commit'
+      )
+    end
+
+    def abort_rebase(&fallback)
+      system('git rebase --abort') || apply_fallback!(
+        fallback,
+        'Failed to abort rebase'
+      )
+    end
+
+    ### MISC ###
+
+    def apply_fallback!(fallback, error_message)
+      Log.error(error_message)
+      # binding.pry
+      fallback&.call || raise(error_message)
     end
   end
-
-  raise "No git repository found"
-end
-
-def git_repo_exists?(path)
-  File.directory?(File.join(path, '.git'))
-end
-
-def git_commit(message, *options)
-  log_info "Creating commit..."
-
-  system("git add . && git commit -m '#{message}' #{options.join}") || raise('Failed to create commit')
-end
-
-def git_branch_protected?(branch)
-  GIT_PROTECTED_BRANCHES.include?(branch)
-end
-
-def git_stash_changes_if_protected_branch
-  current_branch = git_current_branch
-  if git_branch_protected?(current_branch) && git_has_changes?
-    log_warning "Changes detected on a protected branch: '#{current_branch}'"
-    log "Protected branches should not be modified directly."
-    yes_no(
-      text: "Do you want to stash your changes and continue? (y/N):",
-      yes: proc {
-        git_stash_changes
-        log_success "Changes stashed successfully"
-      },
-      no: proc {
-        raise "Operation cancelled, Cannot proceed on protected branch '#{current_branch}' with uncommitted changes"
-      }
-    )
-    return
-  end
-end
-
-def git_stash_changes
-  timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
-  branch_name = git_current_branch
-  stash_message = "Auto-stash from #{branch_name} - #{timestamp}"
-  
-  log_info "Stashing changes..."
-  
-  result = system("git stash push -m '#{stash_message}'")
-  
-  unless result
-    play_error_sound
-    raise "Failed to stash changes"
-  end
-  
-  log_success "Changes stashed with message: '#{stash_message}'"
-  stash_message
-end
-
-def git_commit_if_changes(message = "WIP autocommit")
-  if git_has_changes?
-    log_info "Changes detected"
-    git_commit(message)
-  else
-    log_info "No changes to commit"
-  end
-end
-
-def git_has_changes?
-  !`git status --porcelain`.strip.empty?
-end
-
-def git_checkout(branch_name)
-  log_info "Switching to #{branch_name} branch..."
-  system("git checkout #{branch_name}") || raise("Failed to switch to #{branch_name} branch")
-end
-
-def git_pull
-  log_info "Pulling latest changes..."
-  system("git pull") || raise("Failed to pull latest changes")
-end
-
-def git_cherry_pick(sha)
-  log_info "Cherry-picking commit #{sha}..."
-  system("git cherry-pick #{sha}")
-end
-
-def git_revert(sha)
-  log_info "Reverting commit #{sha}..."
-  system("git revert --no-edit #{sha}")
-end
-
-def git_create_branch(branch_name)
-  system("git checkout -b #{branch_name}") || raise("Failed to create branch: #{branch_name}")
-end
-
-def git_branch_exists?(branch_name)
-  !!system("git show-ref --verify --quiet refs/heads/#{branch_name}")
-end
-
-def git_push_branch
-  log_info "Pushing branch..."
-
-  system('git push -f') || raise('Failed to push branch')
-end
-
-def git_main_branch_name
-  result = `git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null`.strip
-  
-  if $?.success? && !result.empty?
-    return result.split('/').last
-  end
-  
-  branches = `git branch -r`.lines.map(&:strip)
-  
-  if branches.any? { |branch| branch.include?('origin/main') }
-    return 'main'
-  elsif branches.any? { |branch| branch.include?('origin/master') }  
-    return 'master'
-  end
-  
-  current_branch = git_current_branch
-  return current_branch.empty? ? 'main' : current_branch
-end
-
-def git_fetch_branch(branch_name)
-  log_info "Fetching branch '#{branch_name}' from origin..."
-  
-  system("git fetch origin #{branch_name}:#{branch_name}")
-end
-    
-def git_current_branch
-  `git branch --show-current`.strip
 end

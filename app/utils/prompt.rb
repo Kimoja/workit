@@ -1,13 +1,19 @@
-def yes_no(text:, yes: nil, no: nil)
-  play_promt_sound
-  
-  log "❓ #{text} (y/N): "
+module Utils
+  module Prompt
+    extend self
 
-  response = STDIN.gets.chomp.downcase
+    def yes_no(text:, yes: nil, no: nil)
+      Play.promt
 
-  if response == 'y' || response == 'yes'
-    yes&.call
-  else
-    no&.call
+      Log.log "❓ #{text} (y/N): "
+
+      response = STDIN.gets.chomp.downcase
+
+      if %w[y yes].include?(response)
+        yes ? yes.call : true
+      else
+        no ? no.call : false
+      end
+    end
   end
 end

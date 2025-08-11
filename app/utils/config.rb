@@ -1,40 +1,40 @@
-def config
-  return @config if defined?(@config)
+module Utils
+  module Config
+    extend self
 
-  config_path = "#{APP_PATH}/config.json"
+    def config
+      return @config if defined?(@config)
 
-  unless File.exist?(config_path)
-    log_error "Configuration file '#{config_path}' not found"
-    log ""
-    log "Create a config.json file with the following structure:"
-    log_json(
-      {
-        "jira" => {
-          "url" => "https://your-instance.atlassian.net",
-          "email" => "your.email@example.com",
-          "token" => "YOUR_API_TOKEN",
-          "default_board" => "BOARD_NAME",
-          "assignee_name" => "Your Name",
-          "issue_type" => "Task"
-        },
-        "github": {
-          "token": "XXX"
-        }
-      }
-    )
-    raise
-  end
+      config_path = "#{APP_PATH}/config.json"
 
-  @config = json_to_ostruct(JSON.parse(File.read(config_path)))
-end
+      unless File.exist?(config_path)
+        Log.error "Configuration file '#{config_path}' not found"
+        Log.log ''
+        Log.log 'Create a config.json file with the following structure:'
+        Log.json(
+          {
+            'jira' => {
+              'url' => 'https://your-instance.atlassian.net',
+              'email' => 'your.email@example.com',
+              'token' => 'YOUR_API_TOKEN',
+              'default_board' => 'BOARD_NAME',
+              'assignee_name' => 'Your Name',
+              'issue_type' => 'Task'
+            },
+            github: {
+              token: 'XXX'
+            }
+          }
+        )
+        raise
+      end
 
-def json_to_ostruct(obj)
-  case obj
-  when Hash
-    OpenStruct.new(obj.transform_values { |v| json_to_ostruct(v) })
-  when Array
-    obj.map { |item| json_to_ostruct(item) }
-  else
-    obj
+      @config = JSON.parse(File.read(config_path))
+    end
+
+    def get(keys, default = nil)
+      result = config.dig(*keys.split('.'))
+      result.nil? ? default : result
+    end
   end
 end

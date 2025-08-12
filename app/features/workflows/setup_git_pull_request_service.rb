@@ -11,6 +11,30 @@ module Features
 
         Log.log("🚀 Setup Pull Request for branch: #{branch}")
 
+        branch_protected!
+        push_branch
+        create_pull_request
+      end
+
+      private
+
+      def branch_protected!
+        return unless Git.branch_protected?(branch)
+
+        raise "Current branch '#{branch}' is protected. Please switch to another branch or create a new one."
+      end
+
+      def push_branch
+        Git.push_force_with_lease do
+          Prompt.yes_no(
+            text: 'Do you want to push --force the branch?',
+            yes: proc { Git.push_force },
+            no: proc { false }
+          )
+        end
+      end
+
+      def create_pull_request
         git_repo_client.create_pull_request(
           repo_info[:owner],
           repo_info[:repo],
@@ -22,8 +46,6 @@ module Features
           }
         )
       end
-
-      private
 
       def branch
         @branch ||= Git.current_branch
@@ -44,7 +66,7 @@ module Features
       end
 
       def base_branch
-        @base_branch ||= Git.base_branch
+        @base_branch ||= Git.base_branch.gsub(/^origin\//, '')
       end
 
       def repo_info

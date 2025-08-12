@@ -66,7 +66,7 @@ module Features
       end
 
       def base_branch
-        @base_branch ||= Git.base_branch.gsub(/^origin\//, '')
+        @base_branch ||= Git.base_branch.gsub(%r{^origin/}, '')
       end
 
       def repo_info

@@ -151,13 +151,13 @@ module Utils
 
         results << {
           branch: remote_branch,
-          commits_ahead: commits_ahead,
+          commits_ahead: commits_ahead
         }
       end
 
       branch = results.min_by { |r| r[:commits_ahead] }
 
-      return branch[:branch] if branch 
+      return branch[:branch] if branch
 
       apply_fallback!(
         fallback,

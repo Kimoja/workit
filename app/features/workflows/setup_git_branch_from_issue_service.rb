@@ -4,29 +4,42 @@ module Features
       attr_reader(:issue_key, :issue_client)
 
       def call
-        Log.log("🚀 Setup Git branch from issue: #{issue_key}")
-
-        Workflows.setup_git_branch(branch_name:)
+        summary
+        valid_attributes!
+        issue = find_issue
+        Workflows.setup_git_branch(branch_name: branch_name_for_issue(issue))
+        report
       end
 
       private
 
-      def issue
-        @issue ||= issue_client.fetch_issue(issue_key) || raise("Issue with key '#{issue_key}' not found")
+      def summary
+        Log.start("Setup Git branch from issue: #{issue_key}")
       end
 
-      def branch_name
-        @branch_name ||= begin
-          prefix = issue.issue_type == 'bug' ? 'fix/' : 'feat/'
-          branch_suffix = issue.title
-                               .downcase
-                               .gsub(/^\[.*?\]\s*/, '')
-                               .gsub(/\s+/, '-')
-                               .gsub(/-+/, '-')
-                               .gsub(/^-|-$/, '')
+      def valid_attributes!
+        raise "Issue key is required" if issue_key.nil? || issue_key.empty?
+      end
 
-          "#{prefix}#{issue_key}-#{branch_suffix}"
-        end
+      def find_issue
+        issue_client.fetch_issue(issue_key) || raise("Issue with key '#{issue_key}' not found")
+      end
+
+      def branch_name_for_issue(issue)
+        # FIXME: This is a temporary solution, should be moved to a config file
+        prefix = issue.issue_type == 'bug' ? 'fix/' : 'feat/'
+        branch_suffix = issue.title
+                             .downcase
+                             .gsub(/^\[.*?\]\s*/, '')
+                             .gsub(/\s+/, '-')
+                             .gsub(/-+/, '-')
+                             .gsub(/^-|-$/, '')
+
+        "#{prefix}#{issue_key}-#{branch_suffix}"
+      end
+
+      def report
+        Log.success "Branch from issue '#{issue_key}' created successfully"
       end
     end
   end

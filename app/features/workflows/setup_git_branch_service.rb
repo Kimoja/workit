@@ -6,8 +6,8 @@ module Features
       def call
         summary
 
-        Git.navigate_to_repo
         valid_attributes!
+        Git.navigate_to_repo
         return if branch_is_current_branch?
 
         stash_uncommited_changes

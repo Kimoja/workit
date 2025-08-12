@@ -7,7 +7,7 @@ module Features
         summary
         valid_attributes!
         issue = find_issue
-        Workflows.setup_git_branch(branch_name: branch_name_for_issue(issue))
+        Workflows.setup_git_branch(branch: branch_name_for_issue(issue))
         report
       end
 

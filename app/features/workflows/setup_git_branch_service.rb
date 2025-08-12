@@ -7,15 +7,11 @@ module Features
         summary
 
         Git.navigate_to_repo
-
-        if branch == Git.current_branch
-          Log.info("Already on branch '#{branch}', skipping setup")
-          return commit_uncommited_changes!
-        end
+        valid_attributes!
+        return if branch_is_current_branch?
 
         stash_uncommited_changes
-
-        return checkout_to_existing_branch if Git.branch_exists?(branch)
+        return if checkout_to_existing_branch?
 
         checkout_to_base_branch
         Git.create_branch(branch)
@@ -31,12 +27,15 @@ module Features
         Log.pad("- Branch: #{branch}")
       end
 
-      def commit_uncommited_changes
-        return unless Git.changes?
+      def valid_attributes!
+        raise 'Branch is required' if branch.nil? || branch.strip.empty?
+      end
 
-        Log.warn "Changes detected on branch: '#{current_branch}'"
+      def branch_is_current_branch?
+        return false unless branch == Git.current_branch
 
-        Git.commit("Autocommit branch: #{branch}")
+        Log.success("Already on branch '#{branch}'")
+        true
       end
 
       def stash_uncommited_changes
@@ -47,20 +46,20 @@ module Features
         Git.stash_changes
       end
 
-      def checkout_to_existing_branch
-        Log.info "Branch '#{branch}' already exists"
+      def checkout_to_existing_branch?
+        return false unless Git.branch_exists?(branch)
 
+        Log.info "Branch '#{branch}' already exists"
+        checkout_to_branch
+        Log.success("Switched to branch '#{branch}'")
+
+        true
+      end
+
+      def checkout_to_branch
         Git.checkout(branch)
 
-        Git.pull do
-          Prompt.yes_no(
-            text: 'Do you want to continue without pulling the branch?',
-            yes: proc { Git.changes? ? Git.abort_rebase : true },
-            no: proc { false }
-          )
-        end
-
-        Log.info("Switched to branch '#{branch}', skipping setup")
+        pull_if_remote('Do you want to continue without pulling the branch?')
       end
 
       def checkout_to_base_branch
@@ -80,9 +79,15 @@ module Features
           }
         )
 
+        pull_if_remote('Do you want to continue without pulling the base branch?')
+      end
+
+      def pull_if_remote(text)
+        return unless Git.remote_branch_exists?(Git.current_branch)
+
         Git.pull do
           Prompt.yes_no(
-            text: 'Do you want to continue without pulling the base branch?',
+            text:,
             yes: proc { Git.changes? ? Git.abort_rebase : true },
             no: proc { false }
           )
@@ -90,7 +95,7 @@ module Features
       end
 
       def commit_message
-        Branch.commit_message_from_branch(branch)
+        Git.commit_message_from_branch(branch)
       end
 
       def report

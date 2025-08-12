@@ -12,6 +12,8 @@ module Features
         Open.browser(issue.url)
 
         report(issue)
+
+        issue.url
       end
 
       private
@@ -30,6 +32,56 @@ module Features
         raise 'Issue type is required' if issue_type.nil? || issue_type.strip.empty?
         raise 'Assignee name is required' if assignee_name.nil? || assignee_name.strip.empty?
       end
+
+      def create_issue
+        validated_type = validate_issue_type
+
+        payload = {
+          fields: {
+            project: { key: project_key },
+            summary: title,
+            description: 'Issue created automatically via Ruby CLI script',
+            issuetype: { name: validated_type }
+          }
+        }
+
+        if sprint_id && sprint_field_id
+          payload[:fields][sprint_field_id] = sprint_id
+          Log.info 'Adding to active sprint'
+        else
+          Log.info 'Creating in backlog'
+        end
+
+        payload[:fields][:assignee] = { id: user_id } if user_id
+
+        Log.info 'Creating issue...'
+
+        binding.pry
+        raise
+
+        issue_client.create_issue(payload)
+      end
+
+      def add_to_cache(issue)
+        Cache.set(
+          'last_issue', value: {
+            'url' => issue.url,
+            'issue_key' => issue.key
+          }
+        )
+      end
+
+      def report(issue)
+        Log.success "Issue created successfully: #{issue.key}"
+        Log.info "URL: #{issue.url}"
+
+        return Log.info 'Issue added to project backlog' if board_type == 'scrum' && sprint_id.nil?
+        return Log.info 'Issue added to active sprint' if board_type == 'scrum' && sprint_id
+
+        Log.info 'Issue added to Kanban board'
+      end
+
+      ### ATTRIBUTES ###
 
       def board_id
         @board_id ||= find_board_id
@@ -276,54 +328,6 @@ module Features
         available_types.each { |type| Log.pad "- #{type}" }
 
         raise "Issue type '#{issue_type}' not found"
-      end
-
-      def create_issue
-        validated_type = validate_issue_type
-
-        payload = {
-          fields: {
-            project: { key: project_key },
-            summary: title,
-            description: 'Issue created automatically via Ruby CLI script',
-            issuetype: { name: validated_type }
-          }
-        }
-
-        if sprint_id && sprint_field_id
-          payload[:fields][sprint_field_id] = sprint_id
-          Log.info 'Adding to active sprint'
-        else
-          Log.info 'Creating in backlog'
-        end
-
-        payload[:fields][:assignee] = { id: user_id } if user_id
-
-        Log.info 'Creating issue...'
-
-        binding.pry
-        raise
-
-        issue_client.create_issue(payload)
-      end
-
-      def add_to_cache(issue)
-        Cache.set(
-          'last_issue', value: {
-            'url' => issue.url,
-            'issue_key' => issue.key
-          }
-        )
-      end
-
-      def report(issue)
-        Log.success "Issue created successfully: #{issue.key}"
-        Log.info "URL: #{issue.url}"
-
-        return Log.info 'Issue added to project backlog' if board_type == 'scrum' && sprint_id.nil?
-        return Log.info 'Issue added to active sprint' if board_type == 'scrum' && sprint_id
-
-        Log.info 'Issue added to Kanban board'
       end
     end
   end

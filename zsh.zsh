@@ -3,10 +3,12 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Format : function_name;ruby_class;[alias]
 ruby_commands=(
+  "create-issue;CreateIssueCommand;issue"
   "setup-git-branch;SetupGitBranchCommand;branch"
   "setup-git-branch-issue;SetupGitBranchFromIssueCommand;branch-issue"
   "setup-git-pull-request;SetupGitPullRequestCommand;pr"
-  "issue;CreateIssueCommand"
+
+
   "setup-workflow;SetupWorkflowCommand;flow"
   "git-bump;CreateGitBumpCommand;bump"
   "open-browser-aliases;OpenBrowserAliasesCommand;a"

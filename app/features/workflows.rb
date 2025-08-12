@@ -15,6 +15,10 @@ module Features
       Workflows::SetupGitPullRequestService.call(...)
     end
 
+    def create_issue(...)
+      Workflows::CreateIssueService.call(...)
+    end
+
     #--
 
     def setup_workflow(...)

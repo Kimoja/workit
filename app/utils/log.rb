@@ -6,21 +6,25 @@ module Utils
       puts message
     end
 
+    def pad(message)
+      Log.log("  #{message}")
+    end
+
     def info(message)
       Log.log("ℹ #{message}")
     end
 
     def success(message)
-      Log.log("✅ #{message}")
+      Log.log("\e[32m✓ #{message}\e[0m")
     end
 
     def warn(message)
-      Log.log("⚠️ Warning: #{message}")
+      Log.log("\e[33m⚠ Warning: #{message}\e[0m")
     end
 
     def error(message)
       Play.error
-      Log.log("❌ Erreur: #{message}")
+      Log.log("\e[31m✗ Erreur: #{message}\e[0m")
     end
 
     def json(json)

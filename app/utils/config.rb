@@ -32,8 +32,8 @@ module Utils
       @config = JSON.parse(File.read(config_path))
     end
 
-    def get(keys, default = nil)
-      result = config.dig(*keys.split('.'))
+    def get(*keys, default: nil)
+      result = config.dig(*keys)
       result.nil? ? default : result
     end
   end

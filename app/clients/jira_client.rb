@@ -1,9 +1,9 @@
 module Clients
   class JiraClient < Client
     def self.build_from_config!
-      url = Config.get('jira.url')
-      email = Config.get('jira.email')
-      token = Config.get('jira.token')
+      url = Config.get('jira', 'url')
+      email = Config.get('jira', 'email')
+      token = Config.get('jira', 'token')
 
       raise "Configuration parameter 'jira.url' is required" if url.nil? || token.strip.empty?
 

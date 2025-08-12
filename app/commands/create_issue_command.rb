@@ -1,5 +1,5 @@
 module Commands
-  class CreateIssueCommand
+  class CreateIssueCommand < Command
     def call
       options = {
         board: nil,
@@ -45,50 +45,22 @@ module Commands
           Log.log '  • No active sprint: issue added to backlog'
           exit
         end
-
-        opts.on('-v', '--version', 'Show version') do
-          Log.log 'Issue'
-          exit
-        end
       end.parse!
 
       title = ARGV[0]
-      board_name = options[:board] || config.jira.default_board
-      issue_type = options[:type] || config.jira.default_issue_type
-      assignee_name = config.jira.assignee_name
+      board_name = options[:board] || Config.get("jira", "default_board")
+      issue_type = options[:type] || Config.get("jira", "default_issue_type")
+      assignee_name = Config.get("jira", "assignee_name")
 
-      issue_client = JiraClient.build_from_config!(config)
+      issue_client = Clients::JiraClient.build_from_config!
 
-      validate_create_issue_command!(title:, board_name:, issue_type:, assignee_name:)
-
-      Log.log '🚀 Creating Issue'
-      Log.log "Board: #{board_name}"
-      Log.log "Title: #{title}"
-      Log.log "Type: #{issue_type}"
-      Log.log "Assignee: #{assignee_name}"
-      Log.log ''
-
-      create_issue_service = CreateIssueService.new(
+      Features::Workflows.create_issue(
         title:,
         board_name:,
         issue_type:,
         assignee_name:,
         issue_client:
       )
-
-      create_issue_service.call
-    end
-
-    def validate_create_issue_command!(title:, board_name:, issue_type:, assignee_name:)
-      raise 'Issue title is required' if title.nil? || title.strip.empty?
-
-      raise 'Board name is required' if board_name.nil? || board_name.strip.empty?
-
-      raise 'Issue type is required' if issue_type.nil? || issue_type.strip.empty?
-
-      raise 'Assignee name is required' if assignee_name.nil? || assignee_name.strip.empty?
-
-      Log.success 'Input parameters validated'
     end
   end
 end

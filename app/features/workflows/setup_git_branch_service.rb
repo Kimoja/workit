@@ -28,7 +28,7 @@ module Features
 
       def summary
         Log.start("Setup Git branch: #{branch}")
-        log.pad("- Branch: #{branch}")
+        Log.pad("- Branch: #{branch}")
       end
 
       def commit_uncommited_changes

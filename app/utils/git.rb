@@ -122,6 +122,7 @@ module Utils
 
     def push_force(&fallback)
       Log.info 'Pushing force branch...'
+      #"ok"
 
       system('git push --force') || apply_fallback!(
         fallback,

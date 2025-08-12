@@ -111,12 +111,21 @@ module Utils
       )
     end
 
-    def push(&fallback)
-      Log.info 'Pushing branch...'
+    def push_force_with_lease(&fallback)
+      Log.info 'Pushing force with lease branch...'
 
-      system('git push -f') || apply_fallback!(
+      system('git push --force-with-lease') || apply_fallback!(
         fallback,
-        'Failed to push branch'
+        'Failed to push force with lease branch'
+      )
+    end
+
+    def push_force(&fallback)
+      Log.info 'Pushing force branch...'
+
+      system('git push --force') || apply_fallback!(
+        fallback,
+        'Failed to push force branch'
       )
     end
 
@@ -139,19 +148,18 @@ module Utils
         next if merge_base.empty?
 
         commits_ahead = `git rev-list --count #{merge_base}..HEAD`.strip.to_i
-        commits_behind = `git rev-list --count HEAD..#{merge_base}`.strip.to_i
-        commit_info = `git log -1 --format="%h %s %an %ad" --date=short #{merge_base}`.strip
 
         results << {
           branch: remote_branch,
-          merge_base: merge_base,
           commits_ahead: commits_ahead,
-          commits_behind: commits_behind,
-          commit_info: commit_info
         }
       end
 
-      results.min_by { |r| r[:commits_ahead] } || apply_fallback!(
+      branch = results.min_by { |r| r[:commits_ahead] }
+
+      return branch[:branch] if branch 
+
+      apply_fallback!(
         fallback,
         'Failed to find base branch'
       )

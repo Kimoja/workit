@@ -14,6 +14,10 @@ module Utils
       Log.log("ℹ #{message}")
     end
 
+    def start(message)
+      Log.log("\e[34m▶ #{message}\e[0m")
+    end
+
     def success(message)
       Log.log("\e[32m✓ #{message}\e[0m")
     end

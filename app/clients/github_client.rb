@@ -3,7 +3,7 @@ module Clients
     BASE_URL = 'https://api.github.com'
 
     def self.build_from_config!
-      token = Config.get('github.token')
+      token = Config.get('github', 'token')
 
       raise "Configuration parameter 'github.token' is required" if token.nil? || token.strip.empty?
 

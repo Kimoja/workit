@@ -4,12 +4,12 @@ module Features
       attr_reader(:branch)
 
       def call
-        Log.log("🚀 Setup Git branch: #{branch}")
+        summary
 
         Git.navigate_to_repo
 
         if branch == Git.current_branch
-          Log.info("Already on branch '#{branch}'")
+          Log.info("Already on branch '#{branch}', skipping setup")
           return commit_uncommited_changes!
         end
 
@@ -20,9 +20,16 @@ module Features
         checkout_to_base_branch
         Git.create_branch(branch)
         Git.commit(commit_message, '--allow-empty')
+
+        report
       end
 
       private
+
+      def summary
+        Log.start("Setup Git branch: #{branch}")
+        log.pad("- Branch: #{branch}")
+      end
 
       def commit_uncommited_changes
         return unless Git.changes?
@@ -52,6 +59,8 @@ module Features
             no: proc { false }
           )
         end
+
+        Log.info("Switched to branch '#{branch}', skipping setup")
       end
 
       def checkout_to_base_branch
@@ -82,6 +91,11 @@ module Features
 
       def commit_message
         Branch.commit_message_from_branch(branch)
+      end
+
+      def report
+        Log.success "Branch '#{branch}' created successfully"
+        Log.info "Switched to new branch '#{branch}'"
       end
     end
   end

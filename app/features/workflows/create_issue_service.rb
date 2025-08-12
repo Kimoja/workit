@@ -17,7 +17,7 @@ module Features
       private
 
       def summary
-        Log.info 'Creating Issue'
+        Log.start 'Creating Issue'
         Log.pad "- Board: #{board_name}"
         Log.pad "- Title: #{title}"
         Log.pad "- Type: #{issue_type}"

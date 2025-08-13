@@ -19,7 +19,7 @@ module Features
         if issue_key.nil? || issue_key.strip.empty?
           last_issue_created = Cache.get('last_issue_created')
 
-          if last_issue_key
+          if last_issue_created
             Prompt.yes_no(
               text: "Issue key missing. Would you like to use the last created issue '#{last_issue_key}'?",
               yes: proc { @issue_key = last_issue_created["issue_key"] }

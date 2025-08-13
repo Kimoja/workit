@@ -34,6 +34,8 @@ GEM
     parser (3.3.9.0)
       ast (~> 2.4.1)
       racc
+    pastel (0.8.0)
+      tty-color (~> 0.5)
     prism (1.4.0)
     pry (0.15.2)
       coderay (~> 1.1)
@@ -57,6 +59,16 @@ GEM
       prism (~> 1.4)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
+    tty-color (0.6.0)
+    tty-cursor (0.7.1)
+    tty-prompt (0.23.1)
+      pastel (~> 0.8)
+      tty-reader (~> 0.8)
+    tty-reader (0.9.0)
+      tty-cursor (~> 0.7)
+      tty-screen (~> 0.8)
+      wisper (~> 2.0)
+    tty-screen (0.8.2)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     uinit-memoizable (0.1.0)
@@ -64,6 +76,7 @@ GEM
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
     uri (1.0.3)
+    wisper (2.0.1)
     zeitwerk (2.7.3)
 
 PLATFORMS
@@ -73,6 +86,7 @@ DEPENDENCIES
   activesupport (~> 8.0)
   pry
   rubocop (~> 1.79)
+  tty-prompt (~> 0.23.1)
   uinit-memoizable (~> 0.1.0)
   zeitwerk
 

@@ -47,6 +47,7 @@ module Features
                              .gsub(/\s+/, '-')
                              .gsub(/-+/, '-')
                              .gsub(/^-|-$/, '')
+                             .gsub(/['"]/, '')
 
         "#{prefix}#{issue_key}-#{branch_suffix}"
       end

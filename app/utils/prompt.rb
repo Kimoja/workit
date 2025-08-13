@@ -2,14 +2,14 @@ module Utils
   module Prompt
     extend self
 
+    def prompt
+      @prompt ||= TTY::Prompt.new
+    end
+
     def yes_no(text:, yes: nil, no: nil)
       Play.promt
 
-      Log.log "❓ #{text} (y/N): "
-
-      response = STDIN.gets.chomp.downcase
-
-      if %w[y yes].include?(response)
+      if prompt.yes?("❓ #{text}")
         yes ? yes.call : true
       else
         no ? no.call : false
@@ -21,11 +21,21 @@ module Utils
 
       prompt_text = "❓ #{text}"
       prompt_text += " [#{default}]" if default
-      prompt_text += ": "
 
-      Log.log prompt_text
+      response = prompt.ask(prompt_text, default:)
 
-      response = STDIN.gets.chomp.strip
+      return yield(response) if block_given?
+
+      response
+    end
+
+    def select(text:, options:, default: nil)
+      Play.promt
+
+      prompt_text = "❓ #{text}"
+      prompt_text += " (default: '#{default}')" if default
+
+      response = prompt.select(prompt_text, options)
       response = default if response.empty? && default
 
       return yield(response) if block_given?

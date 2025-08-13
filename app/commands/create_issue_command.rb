@@ -49,11 +49,11 @@ module Commands
       end.parse!
 
       title = ARGV[0]
-      project_key = options[:project_key] || Config.get("jira", "default_project_key")
-      issue_type = options[:type] || Config.get("jira", "default_issue_type")
-      assignee_name = Config.get("jira", "assignee_name")
+      project_key = options[:project_key]
+      issue_type = options[:type]
+      assignee_name = Config.get("@issue_provider", "default_assignee_name")
 
-      issue_client = Clients::JiraClient.build_from_config!
+      issue_client = Clients::Issues.build_from_config!
 
       Features::Workflows.create_issue(
         title:,

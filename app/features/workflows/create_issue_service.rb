@@ -17,10 +17,29 @@ module Features
       private
 
       def valid_attributes!
-        valid_attribute_or_ask(:title, 'Issue title is required') { title&.strip&.present? }
-        valid_attribute_or_ask(:project_key, 'Project key is required') { project_key&.strip&.present? }
-        valid_attribute_or_ask(:issue_type, 'Issue type is required') { issue_type&.strip&.present? }
-        valid_attribute_or_ask(:assignee_name, 'Assignee name is required') { assignee_name&.strip&.present? }
+        valid_attribute_or_ask(
+          attribute: :title,
+          text: 'Issue title is required'
+        ) { title&.strip&.present? }
+
+        valid_attribute_or_select(
+          attribute: :project_key,
+          text: 'Project key is required',
+          options: issue_client.fetch_project_keys,
+          default: Config.get("@issue_provider", "default_project_key")
+        ) { project_key&.strip&.present? }
+
+        valid_attribute_or_ask(
+          attribute: :issue_type,
+          text: 'Issue type is required',
+          default: Config.get("@issue_provider", "default_issue_type")
+        ) { issue_type&.strip&.present? }
+
+        valid_attribute_or_ask(
+          attribute: :assignee_name,
+          text: 'Assignee name is required',
+          default: Config.get("@issue_provider", "assignee_name")
+        ) { assignee_name&.strip&.present? }
       end
 
       def summary

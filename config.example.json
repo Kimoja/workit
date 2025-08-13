@@ -5,8 +5,7 @@
     "token": "",
     "default_board": "KRAFT",
     "default_issue_type": "Tâche",
-    "assignee_name": "Carrilho Joakim",
-    "base_script": "/Users/joakimcarrilho/dev/zsh/"
+    "assignee_name": "Carrilho Joakim"
   },
   "github": {
     "token": ""

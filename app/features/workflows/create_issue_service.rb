@@ -73,15 +73,15 @@ module Features
 
       def report(issue)
         Log.success "Issue created successfully: #{issue.key}"
-        Log.info "URL: #{issue.url}"
+        Log.pad "URL: #{issue.url}"
 
-        return Log.info 'Issue added to project backlog' if board_type == 'scrum' && sprint_id.nil?
-        return Log.info 'Issue added to active sprint' if board_type == 'scrum' && sprint_id
+        return Log.pad 'Issue added to project backlog' if board_type == 'scrum' && sprint_id.nil?
+        return Log.pad 'Issue added to active sprint' if board_type == 'scrum' && sprint_id
 
-        Log.info 'Issue added to Kanban board'
+        Log.pad 'Issue added to Kanban board'
       end
 
-      ### ATTRIBUTES ###
+      ### STATE ###
 
       def board_id
         @board_id ||= find_board_id

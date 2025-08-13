@@ -7,19 +7,80 @@ module Features
       )
 
       def call
+        summary
         Git.navigate_to_repo
-
-        Log.log("🚀 Setup Pull Request for branch: #{branch}")
-
         branch_protected!
         push_branch
-        pull_request = create_pull_request
-        add_to_cache(pull_request)
+
+        pull_request = existing_pull_request || create_pull_request
 
         report
+
+        pull_request['html_url']
       end
 
       private
+
+      def summary
+        Log.start 'Setup Pull Request'
+      end
+
+      def branch_protected!
+        return unless Git.branch_protected?(branch)
+
+        raise "Current branch '#{branch}' is protected. Please switch to another branch or create a new one."
+      end
+
+      def push_branch
+        Git.push_force_with_lease do
+          Prompt.yes_no(
+            text: 'Do you want to push --force the branch?',
+            yes: proc { Git.push_force },
+            no: proc { false }
+          )
+        end
+      end
+
+      def existing_pull_request
+        return @existing_pull_request if defined?(@existing_pull_request)
+
+        @existing_pull_request = git_repo_client.fetch_pull_request_by_branch_name(owner, repo, branch)
+      end
+
+      def create_pull_request
+        git_repo_client.create_pull_request(
+          repo_info[:owner],
+          repo_info[:repo],
+          {
+            title:,
+            head: branch,
+            base: base_branch,
+            body:
+          }
+        )
+      end
+
+      def add_to_cache(pull_request)
+        Cache.set(
+          "prs", repo_info[:repo], branch,
+          value: {
+            url: pull_request['html_url'],
+            number: pull_request['number'],
+            title: pull_request['title']
+          }
+        )
+      end
+
+      def report(pull_request)
+        Log.success(
+          existing_pull_request ? "Pull Request already exists and is up to date" : "Pull Request created successfully"
+        )
+        Log.pad "URL: #{pull_request['html_url']}"
+        Log.pad "Title: #{pull_request['title']}"
+        Log.pad "Number: #{pull_request['number']}"
+      end
+
+      ### STATE ###
 
       def branch
         @branch ||= Git.current_branch
@@ -59,46 +120,6 @@ module Features
 
       def branch_type
         @branch_type ||= branch.split("/").first || "feat"
-      end
-
-      def branch_protected!
-        return unless Git.branch_protected?(branch)
-
-        raise "Current branch '#{branch}' is protected. Please switch to another branch or create a new one."
-      end
-
-      def push_branch
-        Git.push_force_with_lease do
-          Prompt.yes_no(
-            text: 'Do you want to push --force the branch?',
-            yes: proc { Git.push_force },
-            no: proc { false }
-          )
-        end
-      end
-
-      def create_pull_request
-        git_repo_client.create_pull_request(
-          repo_info[:owner],
-          repo_info[:repo],
-          {
-            title:,
-            head: branch,
-            base: base_branch,
-            body:
-          }
-        )
-      end
-
-      def add_to_cache(pull_request)
-        Cache.set(
-          "prs", repo_info[:repo], branch,
-          value: {
-            url: pull_request['html_url'],
-            number: pull_request['number'],
-            title: pull_request['title']
-          }
-        )
       end
 
       def body
@@ -171,11 +192,8 @@ module Features
         TEMPLATE
       end
 
-      def report(pull_request)
-        Log.success "Pull Request created successfully"
-        Log.pad "URL: #{pull_request['html_url']}"
-        Log.pad "Title: #{pull_request['title']}"
-        Log.pad "Number: #{pull_request['number']}"
+      def cache_key
+        "pr_#{repo}_#{branch}"
       end
     end
   end

@@ -4,16 +4,17 @@ class Client
 
   attr_reader :base_url, :token
 
-  def get(endpoint)
-    request('GET', endpoint)
+  def get(endpoint, query: nil)
+    request('GET', endpoint, query:)
   end
 
-  def post(endpoint, body = nil)
-    request('POST', endpoint, body)
+  def post(endpoint, body: nil)
+    request('POST', endpoint, body:)
   end
 
-  def request(method, endpoint, body = nil)
+  def request(method, endpoint, body: nil, query: nil)
     uri = URI("#{base_url}#{endpoint}")
+    uri.query = URI.encode_www_form(query) if query
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
 

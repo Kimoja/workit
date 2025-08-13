@@ -14,21 +14,9 @@ module Clients
       super(base_url: BASE_URL, token:)
     end
 
-    def fetch_open_pull_requests(owner, repo)
-      prs = get("/repos/#{owner}/#{repo}/pulls?state=open")
-      prs.each do |pr|
-        Cache.set(
-          "prs", "github", owner, repo, pr['head']['ref'], value: {
-            url: pr['html_url'],
-            number: pr['number'],
-            title: pr['title']
-          }
-        )
-      end
-    end
-
     def create_pull_request(owner, repo, pull_request_data)
-      post("/repos/#{owner}/#{repo}/pulls", pull_request_data)
+      pr = post("/repos/#{owner}/#{repo}/pulls", body: pull_request_data)
+      add_pull_request_to_cache(pr, owner, repo)
     end
 
     def fetch_pull_request_commits(owner, repo, pr_number)
@@ -36,9 +24,13 @@ module Clients
     end
 
     def fetch_pull_request_by_branch_name(owner, repo, branch_name)
-      prs = fetch_open_pull_requests(owner, repo)
+      cached_pr = Cache.get("prs", "github", owner, repo, branch_name)
+      return cached_pr if cached_pr
 
-      prs.find { |pull_request| pull_request['head']['ref'] == branch_name }
+      query = URI.encode_www_form({ head: "#{owner}:#{branch_name}" })
+      pr = get("/repos/#{owner}/#{repo}/pulls", query:).first
+
+      add_pull_request_to_cache(pr, owner, repo) if pr
     end
 
     def build_commit_url(owner, repo, sha)
@@ -51,6 +43,19 @@ module Clients
         request['Accept'] = 'application/vnd.github.v3+json'
         request['Content-Type'] = 'application/json'
       end
+    end
+
+    private
+
+    def add_pull_request_to_cache(pull_request, owner, repo)
+      Cache.set(
+        "prs", "github", owner, repo, pull_request['head']['ref'],
+        value: {
+          url: pr['html_url'],
+          number: pr['number'],
+          title: pr['title']
+        }
+      )
     end
   end
 end

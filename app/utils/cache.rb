@@ -25,6 +25,8 @@ module Utils
       last_key = keys.pop
       parent = keys.empty? ? cache : keys.reduce(cache) { |h, k| h[k] ||= {} }
       parent[last_key] = value
+
+      value
     end
 
     def save

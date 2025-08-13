@@ -52,11 +52,13 @@ module Clients
     end
 
     def fetch_issue_types(project_key)
-      project = get("/rest/api/2/issue/createmeta?projectKeys=#{project_key}&expand=projects.issuetypes")['projects'].first
+      project = get(
+        "/rest/api/2/issue/createmeta?projectKeys=#{project_key}&expand=projects.issuetypes"
+      )['projects'].first
 
       return unless project
 
-      project['issuetypes'].map { |it| it['name'] }
+      project['issuetypes'].map { |type| type['name'] }
     end
 
     def fetch_user_by_name(name)

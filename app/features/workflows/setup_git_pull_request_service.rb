@@ -13,10 +13,11 @@ module Features
         push_branch
 
         pull_request = existing_pull_request || create_pull_request
-
+        url = pull_request['html_url']
+        Open.browser(url)
         report
 
-        pull_request['html_url']
+        url
       end
 
       private
@@ -44,7 +45,9 @@ module Features
       def existing_pull_request
         return @existing_pull_request if defined?(@existing_pull_request)
 
-        @existing_pull_request = git_repo_client.fetch_pull_request_by_branch_name(owner, repo, branch)
+        @existing_pull_request = git_repo_client.fetch_pull_request_by_branch_name(
+          repo_info[:owner], repo_info[:repo], branch
+        )
 
         # Gérer la ré-ouverture d'une PR fermée
         if @existing_pull_request && @existing_pull_request['state'] == 'closed'
@@ -53,7 +56,9 @@ module Features
           Prompt.yes_no(
             text: "Do you want to reopen the Pull Request?",
             yes: proc {
-              @existing_pull_request = git_repo_client.reopen_pull_request(owner, repo, branch)
+              @existing_pull_request = git_repo_client.reopen_pull_request(
+                repo_info[:owner], repo_info[:repo], branch
+              )
             },
             no: proc {
               Log.info "Keeping Pull Request closed, will create a new one"
@@ -89,30 +94,32 @@ module Features
 
       ### STATE ###
 
-      def branch
-        @branch ||= Git.current_branch
+      memo def branch
+        Git.current_branch
       end
 
-      def issue
-        return @issue if defined?(@issue)
-
-        @issue = find_issue
+      memo def issue
+        find_issue
       end
 
-      def title
-        @title ||= Branch.commit_message_from_branch(branch)
+      memo def title
+        Branch.commit_message_from_branch(branch)
       end
 
-      def description
-        @description ||= issue ? issue.description : title
+      memo def description
+        issue ? issue.description : title
       end
 
-      def base_branch
-        @base_branch ||= Git.base_branch.gsub(%r{^origin/}, '')
+      memo def base_branch
+        Git.base_branch.gsub(%r{^origin/}, '')
       end
 
-      def repo_info
-        @repo_info ||= Git.repo_info
+      memo def repo_info
+        Git.repo_info
+      end
+
+      memo def branch_type
+        branch.split("/").first || "feat"
       end
 
       def find_issue
@@ -123,10 +130,6 @@ module Features
         issue_key = "#{match[1]}-#{match[2]}"
 
         issue_client.fetch_issue(issue_key)
-      end
-
-      def branch_type
-        @branch_type ||= branch.split("/").first || "feat"
       end
 
       def body
@@ -197,10 +200,6 @@ module Features
           ## Description
 
         TEMPLATE
-      end
-
-      def cache_key
-        "pr_#{repo}_#{branch}"
       end
     end
   end

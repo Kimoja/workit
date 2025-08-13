@@ -9,6 +9,7 @@ require 'base64'
 require 'uri'
 require 'date'
 require 'ostruct'
+require 'active_support/all'
 
 loader = Zeitwerk::Loader.new
 loader.push_dir('app')

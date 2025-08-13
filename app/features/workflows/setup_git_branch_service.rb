@@ -28,7 +28,7 @@ module Features
       end
 
       def valid_attributes!
-        raise 'Branch is required' if branch.nil? || branch.strip.empty?
+        valid_attribute_or_ask(:branch, 'Branch is required') { branch&.strip&.present? }
       end
 
       def branch_is_current_branch?
@@ -50,16 +50,11 @@ module Features
         return false unless Git.branch_exists?(branch)
 
         Log.info "Branch '#{branch}' already exists"
-        checkout_to_branch
+        Git.checkout(branch)
+        pull_if_remote('Do you want to continue without pulling the branch?')
         Log.success("Switched to branch '#{branch}'")
 
         true
-      end
-
-      def checkout_to_branch
-        Git.checkout(branch)
-
-        pull_if_remote('Do you want to continue without pulling the branch?')
       end
 
       def checkout_to_base_branch
@@ -99,8 +94,7 @@ module Features
       end
 
       def report
-        Log.success "Branch '#{branch}' created successfully"
-        Log.info "Switched to new branch '#{branch}'"
+        Log.success "Switched to new branch '#{branch}'"
       end
     end
   end

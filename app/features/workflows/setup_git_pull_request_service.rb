@@ -45,6 +45,24 @@ module Features
         return @existing_pull_request if defined?(@existing_pull_request)
 
         @existing_pull_request = git_repo_client.fetch_pull_request_by_branch_name(owner, repo, branch)
+
+        # Gérer la ré-ouverture d'une PR fermée
+        if @existing_pull_request && @existing_pull_request['state'] == 'closed'
+          Log.warn "Existing Pull Request ##{@existing_pull_request['number']} is closed"
+
+          Prompt.yes_no(
+            text: "Do you want to reopen the Pull Request?",
+            yes: proc {
+              @existing_pull_request = git_repo_client.reopen_pull_request(owner, repo, branch)
+            },
+            no: proc {
+              Log.info "Keeping Pull Request closed, will create a new one"
+              @existing_pull_request = nil
+            }
+          )
+        end
+
+        @existing_pull_request
       end
 
       def create_pull_request
@@ -60,20 +78,9 @@ module Features
         )
       end
 
-      def add_to_cache(pull_request)
-        Cache.set(
-          "prs", repo_info[:repo], branch,
-          value: {
-            url: pull_request['html_url'],
-            number: pull_request['number'],
-            title: pull_request['title']
-          }
-        )
-      end
-
       def report(pull_request)
         Log.success(
-          existing_pull_request ? "Pull Request already exists and is up to date" : "Pull Request created successfully"
+          existing_pull_request ? "Pull Request already exists" : "Pull Request created successfully"
         )
         Log.pad "URL: #{pull_request['html_url']}"
         Log.pad "Title: #{pull_request['title']}"

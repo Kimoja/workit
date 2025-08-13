@@ -2,7 +2,7 @@ module Commands
   class CreateIssueCommand < Command
     def call
       options = {
-        board: nil,
+        project_key: nil,
         type: nil
       }
 
@@ -14,8 +14,9 @@ module Commands
         opts.separator ''
         opts.separator 'Options:'
 
-        opts.on('-b', '--board BOARD', 'Issue board name (default: from config.json)') do |board|
-          options[:board] = board
+        opts.on('-p', '--project-key PROJECT_KEY',
+                'Issue project key name (default: from config.json)') do |project_key|
+          options[:project_key] = project_key
         end
 
         opts.on('-t', '--type TYPE', 'Issue type (default: from config.json)',
@@ -48,7 +49,7 @@ module Commands
       end.parse!
 
       title = ARGV[0]
-      board_name = options[:board] || Config.get("jira", "default_board")
+      project_key = options[:project_key] || Config.get("jira", "default_project_key")
       issue_type = options[:type] || Config.get("jira", "default_issue_type")
       assignee_name = Config.get("jira", "assignee_name")
 
@@ -56,7 +57,7 @@ module Commands
 
       Features::Workflows.create_issue(
         title:,
-        board_name:,
+        project_key:,
         issue_type:,
         assignee_name:,
         issue_client:

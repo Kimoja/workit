@@ -15,8 +15,22 @@ module Clients
     end
 
     def create_pull_request(owner, repo, pull_request_data)
-      pr = post("/repos/#{owner}/#{repo}/pulls", body: pull_request_data)
-      add_pull_request_to_cache(pr, owner, repo)
+      Log.info "Creating Pull Request..."
+      post("/repos/#{owner}/#{repo}/pulls", body: pull_request_data)
+    end
+
+    def reopen_pull_request(owner, repo, pr_number)
+      Log.info "Reopening Pull Request ##{pr_number}..."
+
+      body = { state: 'open' }
+      pr = patch("/repos/#{owner}/#{repo}/pulls/#{pr_number}", body: body)
+
+      if pr && pr['state'] == 'open'
+        Log.info "Pull Request ##{pr_number} reopened successfully"
+        return pr
+      end
+
+      Log.error "Failed to reopen Pull Request ##{pr_number}"
     end
 
     def fetch_pull_request_commits(owner, repo, pr_number)
@@ -24,38 +38,30 @@ module Clients
     end
 
     def fetch_pull_request_by_branch_name(owner, repo, branch_name)
-      cached_pr = Cache.get("prs", "github", owner, repo, branch_name)
-      return cached_pr if cached_pr
+      Log.info "Searching for Pull Request on branch '#{branch_name}'"
 
       query = URI.encode_www_form({ head: "#{owner}:#{branch_name}" })
       pr = get("/repos/#{owner}/#{repo}/pulls", query:).first
 
-      add_pull_request_to_cache(pr, owner, repo) if pr
+      if pr
+        Log.info "Pull Request ##{pr['number']} found for branch '#{branch_name}'"
+      else
+        Log.info "No Pull Request found for branch '#{branch_name}'"
+      end
+
+      pr
     end
 
     def build_commit_url(owner, repo, sha)
       "https://github.com/#{owner}/#{repo}/commit/#{sha}"
     end
 
-    def request(method, endpoint, body = nil)
+    def request(method, endpoint, body: nil, query: nil)
       super do |request|
         request['Authorization'] = "token #{token}"
         request['Accept'] = 'application/vnd.github.v3+json'
         request['Content-Type'] = 'application/json'
       end
-    end
-
-    private
-
-    def add_pull_request_to_cache(pull_request, owner, repo)
-      Cache.set(
-        "prs", "github", owner, repo, pull_request['head']['ref'],
-        value: {
-          url: pr['html_url'],
-          number: pr['number'],
-          title: pr['title']
-        }
-      )
     end
   end
 end

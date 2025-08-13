@@ -15,7 +15,7 @@ module Features
         pull_request = existing_pull_request || create_pull_request
         url = pull_request['html_url']
         Open.browser(url)
-        report
+        report(pull_request)
 
         url
       end

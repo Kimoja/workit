@@ -103,7 +103,7 @@ module Features
       end
 
       memo def title
-        Branch.commit_message_from_branch(branch)
+        Git.commit_message_from_branch(branch)
       end
 
       memo def description

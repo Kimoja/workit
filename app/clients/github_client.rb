@@ -40,7 +40,7 @@ module Clients
     def fetch_pull_request_by_branch_name(owner, repo, branch_name)
       Log.info "Searching for Pull Request on branch '#{branch_name}'"
 
-      query = URI.encode_www_form({ head: "#{owner}:#{branch_name}" })
+      query ={ head: "#{owner}:#{branch_name}" }
       pr = get("/repos/#{owner}/#{repo}/pulls", query:).first
 
       if pr

@@ -9,7 +9,7 @@ module Commands
       }
 
       OptionParser.new do |opts|
-        opts.banner = "Usage: #{$0} [OPTIONS] \"ISSUE_TITLE\""
+        opts.banner = "Usage: issue [OPTIONS] \"ISSUE_TITLE\""
         opts.separator ''
         opts.separator 'Arguments:'
         opts.separator '  ISSUE_TITLE  Title of the isse to create (required)'

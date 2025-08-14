@@ -22,7 +22,7 @@ module Commands
       }
 
       OptionParser.new do |opts|
-        opts.banner = "Usage: #{$0} [OPTIONS] BRANCH_NAME"
+        opts.banner = "Usage: setup_branch [OPTIONS] BRANCH_NAME"
         opts.separator ''
         opts.separator 'Arguments:'
         opts.separator '  BRANCH_NAME  Name of the branch to create/switch to (required)'

@@ -44,32 +44,30 @@ module Domain
         end
       end
 
-      def existing_pull_request
-        return @existing_pull_request if defined?(@existing_pull_request)
-
-        @existing_pull_request = git_repo_client.fetch_pull_request_by_branch_name(
+      memo def existing_pull_request
+        pull_request = git_repo_client.fetch_pull_request_by_branch_name(
           repo_info[:owner], repo_info[:repo], branch
         )
 
         # Gérer la ré-ouverture d'une PR fermée
-        if @existing_pull_request && @existing_pull_request['state'] == 'closed'
-          Log.warn "Existing Pull Request ##{@existing_pull_request['number']} is closed"
+        if pull_request && pull_request['state'] == 'closed'
+          Log.warn "Existing Pull Request ##{pull_request['number']} is closed"
 
           Prompt.yes_no(
             text: "Do you want to reopen the Pull Request?",
             yes: proc {
-              @existing_pull_request = git_repo_client.reopen_pull_request(
+              pull_request = git_repo_client.reopen_pull_request(
                 repo_info[:owner], repo_info[:repo], branch
               )
             },
             no: proc {
               Log.info "Keeping Pull Request closed, will create a new one"
-              @existing_pull_request = nil
+              pull_request = nil
             }
           )
         end
 
-        @existing_pull_request
+        pull_request
       end
 
       def create_pull_request

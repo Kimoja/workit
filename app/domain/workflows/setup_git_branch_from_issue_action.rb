@@ -22,7 +22,7 @@ module Domain
           attribute: :issue_key,
           text: 'Issue key is required',
           options: proc { possible_issue_keys },
-          formatter: proc { |value| value.split(' > ').first },
+          formatter: proc { |value| value.split(' > ').first }
         ) { issue_key&.strip&.present? }
       end
 

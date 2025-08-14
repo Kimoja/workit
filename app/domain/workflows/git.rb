@@ -155,11 +155,22 @@ module Domain
         )
       end
 
-      def abort_rebase(&fallback)
-        system('git rebase --abort') || apply_fallback!(
-          fallback,
-          'Failed to abort rebase'
-        )
+      def recent_branches
+        local_branches = `git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)' --count=10`
+        local_branches = local_branches
+                         .lines
+                         .map(&:strip)
+                         .reject(&:empty?)
+
+        remote_branches = `git for-each-ref --sort=-committerdate refs/remotes/ --format='%(refname:short)'`
+        remote_branches = remote_branches
+                          .lines
+                          .map { |branch| branch.strip.sub('origin/', '') }
+                          .reject(&:empty?)
+                          .reject { |branch| branch.include?('/HEAD') || branch == "origin" }
+
+        # Combiner les deux listes
+        (local_branches + remote_branches).uniq.sort
       end
 
       ### REMOTE ###
@@ -262,6 +273,13 @@ module Domain
         end
 
         result
+      end
+
+      def abort_rebase(&fallback)
+        system('git rebase --abort') || apply_fallback!(
+          fallback,
+          'Failed to abort rebase'
+        )
       end
 
       def apply_fallback!(fallback, error_message)

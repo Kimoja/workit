@@ -34,6 +34,13 @@ module Domain
           attribute: :branch,
           text: 'Branch name is required'
         ) { branch&.strip&.present? }
+
+        valid_attribute_or_select(
+          attribute: :base_branch,
+          text: 'Select base branch for the new branch:',
+          options: Git.recent_branches,
+          default: Git.main_branch
+        ) { base_branch&.strip&.present? }
       end
 
       def branch_is_current_branch?
@@ -63,21 +70,9 @@ module Domain
       end
 
       def checkout_to_base_branch
-        main_branch = Git.main_branch
         current_branch = Git.current_branch
 
-        return Git.pull if main_branch == current_branch
-
-        Prompt.yes_no(
-          text: "Do you want to use '#{main_branch}' as base branch or use the current branch " \
-                "'#{current_branch}'? (y for #{main_branch}, n for current)",
-          yes: proc {
-            Git.checkout(main_branch)
-          },
-          no: proc {
-            Log.info "Using current branch '#{current_branch}' as base branch..."
-          }
-        )
+        Git.checkout(main_branch) unless base_branch == current_branch
 
         pull_if_remote('Do you want to continue without pulling the base branch?')
       end

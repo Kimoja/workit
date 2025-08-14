@@ -46,10 +46,9 @@ module Domain
 
       memo def existing_pull_request
         pull_request = git_repo_client.fetch_pull_request_by_branch_name(
-          repo_info[:owner], repo_info[:repo], branch
+          owner, repo, branch
         )
 
-        # Gérer la ré-ouverture d'une PR fermée
         if pull_request && pull_request['state'] == 'closed'
           Log.warn "Existing Pull Request ##{pull_request['number']} is closed"
 
@@ -57,7 +56,7 @@ module Domain
             text: "Do you want to reopen the Pull Request?",
             yes: proc {
               pull_request = git_repo_client.reopen_pull_request(
-                repo_info[:owner], repo_info[:repo], branch
+                owner, repo, branch
               )
             },
             no: proc {
@@ -72,8 +71,8 @@ module Domain
 
       def create_pull_request
         git_repo_client.create_pull_request(
-          repo_info[:owner],
-          repo_info[:repo],
+          owner,
+          repo,
           {
             title:,
             head: branch,
@@ -116,6 +115,14 @@ module Domain
 
       memo def repo_info
         Git.repo_info
+      end
+
+      memo def repo
+        repo_info[:repo]
+      end
+
+      memo def owner
+        owner
       end
 
       memo def branch_type

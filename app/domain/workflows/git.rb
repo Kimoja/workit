@@ -2,6 +2,7 @@ module Domain
   module Workflows
     module Git
       extend self
+      include Utils
 
       GIT_PROTECTED_BRANCHES = %w[
         main master develop dev development

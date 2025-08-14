@@ -9,10 +9,10 @@ module Domain
         valid_attributes!
         summary
         find_issue
-        Workflows.setup_git_branch(branch: branch_name)
+        Workflows.setup_git_branch(branch:)
         report
 
-        branch_name
+        branch
       end
 
       private
@@ -21,13 +21,14 @@ module Domain
         valid_attribute_or_select(
           attribute: :issue_key,
           text: 'Issue key is required',
-          options: proc do 
-            fetch_user_issues
-              .fetch_user_issue_keys(Config.get("@issue_provider", "default_assignee_name")) 
-              .map do |issue| 
-                "#{ issue.key } > #{ issue.title }"
+          options: proc do
+            issue_client
+              .fetch_user_issues(Config.get("@issue_provider", "default_assignee_name"))
+              .map do |issue|
+                "#{issue.key} > #{issue.title}"
               end
-          end
+          end,
+          formatter: proc { |value| value.split(' > ').first },
         ) { issue_key&.strip&.present? }
       end
 
@@ -39,7 +40,7 @@ module Domain
         @issue = issue_client.fetch_issue(issue_key) || raise("Issue with key '#{issue_key}' not found")
       end
 
-      memo def branch_name
+      memo def branch
         # FIXME: This is a temporary solution, should be moved to a config file
         prefix = issue.issue_type == 'bug' ? 'fix/' : 'feat/'
         branch_suffix = issue.title
@@ -54,7 +55,7 @@ module Domain
       end
 
       def report
-        Log.success "Branch '#{branch_name}' setup complete for issue #{issue_key}"
+        Log.success "Branch '#{branch}' setup complete for issue #{issue_key}"
       end
     end
   end

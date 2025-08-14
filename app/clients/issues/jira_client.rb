@@ -204,7 +204,7 @@ module Clients
         if issues && !issues.empty?
           Log.success "Found #{issues.size} recent issues for user '#{user_name}'"
 
-          issues.map { |issue| issue["key"] }
+          issues.map { |issue| map_issue(issue) }
         else
           Log.info "No issues found for user '#{user_name}'"
           []

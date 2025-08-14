@@ -4,10 +4,10 @@ module Domain
       include Action
       include Domain
 
-      attr_reader :title, :project_key, :issue_type, :assignee_name, :issue_client
+      attr_reader :title, :project_key, :issue_type, :user_name, :issue_client
 
       def call
-        valid_attributes!
+        setup_and_valid_attributes!
         summary
         issue = create_issue
         add_to_cache(issue)
@@ -19,7 +19,7 @@ module Domain
 
       private
 
-      def valid_attributes!
+      def setup_and_valid_attributes!
         valid_attribute_or_ask(
           attribute: :title,
           text: 'Issue title is required'
@@ -28,7 +28,7 @@ module Domain
         valid_attribute_or_select(
           attribute: :project_key,
           text: 'Project key is required',
-          options: proc { issue_client.fetch_project_keys },
+          options: proc { issue_client.fetch_projects.keys.sort },
           default: Config.get("@issue_provider", "default_project_key")
         ) { project_key&.strip&.present? }
 
@@ -40,11 +40,11 @@ module Domain
         ) { issue_type&.strip&.present? }
 
         valid_attribute_or_select(
-          attribute: :assignee_name,
-          text: 'Assignee name is required',
+          attribute: :user_name,
+          text: 'User name is required',
           options: proc { issue_client.fetch_project_user_names(project_key) },
-          default: Config.get("@issue_provider", "default_assignee_name")
-        ) { assignee_name&.strip&.present? }
+          default: Config.get("@issue_provider", "default_user_name")
+        ) { user_name&.strip&.present? }
       end
 
       def summary
@@ -52,7 +52,7 @@ module Domain
         Log.pad "- Project Key: #{project_key}"
         Log.pad "- Title: #{title}"
         Log.pad "- Type: #{issue_type}"
-        Log.pad "- Assignee: #{assignee_name}"
+        Log.pad "- User: #{user_name}"
       end
 
       def create_issue
@@ -131,10 +131,10 @@ module Domain
       end
 
       memo def user_id
-        user_id = issue_client.fetch_user_id(assignee_name)
+        user_id = issue_client.fetch_user_id(user_name)
         return user_id if user_id
 
-        Log.warn "User '#{assignee_name}' not found, issue will be unassigned"
+        Log.warn "User '#{user_name}' not found, issue will be unassigned"
         nil
       end
 

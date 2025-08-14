@@ -5,7 +5,7 @@
     "token": "",
     "default_board": "KRAFT",
     "default_issue_type": "Tâche",
-    "assignee_name": "Carrilho Joakim"
+    "user_name": "Carrilho Joakim"
   },
   "github": {
     "token": ""

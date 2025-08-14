@@ -6,7 +6,7 @@ module Domain
       attr_reader(:issue_key, :issue_client, :issue)
 
       def call
-        valid_attributes!
+        setup_and_valid_attributes!
         summary
         find_issue
         Workflows.setup_git_branch(branch:)
@@ -17,19 +17,20 @@ module Domain
 
       private
 
-      def valid_attributes!
+      def setup_and_valid_attributes!
         valid_attribute_or_select(
           attribute: :issue_key,
           text: 'Issue key is required',
-          options: proc do
-            issue_client
-              .fetch_user_issues(Config.get("@issue_provider", "default_assignee_name"))
-              .map do |issue|
-                "#{issue.key} > #{issue.title}"
-              end
-          end,
+          options: proc { possible_issue_keys },
           formatter: proc { |value| value.split(' > ').first },
         ) { issue_key&.strip&.present? }
+        raise
+      end
+
+      def possible_issue_keys
+        issue_client
+          .fetch_user_issues(Config.get("@issue_provider", "default_user_name"))
+          .map { |issue| "#{issue.key} > #{issue.title}" }
       end
 
       def summary

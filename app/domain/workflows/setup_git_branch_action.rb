@@ -6,7 +6,7 @@ module Domain
       attr_reader(:branch, :base_branch)
 
       def call
-        valid_attributes!
+        setup_and_valid_attributes!
         summary
 
         Git.navigate_to_repo
@@ -24,12 +24,7 @@ module Domain
 
       private
 
-      def summary
-        Log.start("Setup Git branch: #{branch}")
-        Log.pad("- Branch name: #{branch}")
-      end
-
-      def valid_attributes!
+      def setup_and_valid_attributes!
         valid_attribute_or_ask(
           attribute: :branch,
           text: 'Branch name is required'
@@ -38,9 +33,19 @@ module Domain
         valid_attribute_or_select(
           attribute: :base_branch,
           text: 'Select base branch for the new branch:',
-          options: Git.recent_branches,
-          default: Git.main_branch
+          options: proc { Git.recent_branches },
+          default: proc { Git.main_branch }
         ) { base_branch&.strip&.present? }
+      end
+
+      def recent_branches
+        Log.start("Setup Git branch: #{branch}")
+        Log.pad("- Branch name: #{branch}")
+      end
+
+      def summary
+        Log.start("Setup Git branch: #{branch}")
+        Log.pad("- Branch name: #{branch}")
       end
 
       def branch_is_current_branch?

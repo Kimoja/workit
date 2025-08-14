@@ -168,6 +168,7 @@ module Domain
                           .map { |branch| branch.strip.sub('origin/', '') }
                           .reject(&:empty?)
                           .reject { |branch| branch.include?('/HEAD') || branch == "origin" }
+                          .select { |branch| branch_exists?(branch) }
 
         # Combiner les deux listes
         (local_branches + remote_branches).uniq.sort

@@ -32,15 +32,6 @@ module Clients
         nil
       end
 
-      def fetch_project_keys
-        Log.info "Fetching project keys..."
-
-        projects = fetch_projects
-
-        Log.info "#{projects.size} project keys found"
-        projects.keys.sort
-      end
-
       def fetch_projects
         Log.info "Fetching projects..."
 

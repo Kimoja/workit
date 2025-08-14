@@ -7,7 +7,6 @@ module Domain
       GIT_PROTECTED_BRANCHES = %w[
         main master develop dev development
         staging stage production prod release
-        hotfix integration
       ].freeze
 
       ### REPO ###

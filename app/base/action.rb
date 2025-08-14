@@ -7,32 +7,38 @@ module Action
     base.include Uinit::Memoizable
   end
 
-  def valid_attribute_or_ask(attribute:, text:, default: nil, &validator)
-    return if validator.call
-
+  def ask_for_attribute(attribute:, text:, default: nil)
     Prompt.ask(text:) do |response|
       instance_variable_set("@#{attribute}", response || default)
 
-      return if validator.call
+      yield if block_given?
+    end
+  end
 
-      raise text
+  def valid_attribute_or_ask(attribute:, text:, default: nil, &validator)
+    return if validator.call
+
+    ask_for_attribute(attribute:, text:, default:) do
+      raise text unless validator.call
+    end
+  end
+
+  def select_for_attribute(attribute:, text:, options:, default: nil)
+    options.delete(default)
+    options.unshift(default)
+
+    Prompt.select(text:, options:, default:) do |response|
+      instance_variable_set("@#{attribute}", response)
+
+      yield if block_given?
     end
   end
 
   def valid_attribute_or_select(attribute:, text:, options:, default: nil, &validator)
     return if validator.call
 
-    options.delete(default)
-    options.unshift(default)
-
-    # rubocop:disable Lint/UnreachableLoop
-    Prompt.select(text:, options:, default:) do |response|
-      instance_variable_set("@#{attribute}", response)
-
-      return if validator.call
-
-      raise text
+    select_for_attribute(attribute:, text:, options:, default:) do
+      raise text unless validator.call
     end
-    # rubocop:enable Lint/UnreachableLoop
   end
 end

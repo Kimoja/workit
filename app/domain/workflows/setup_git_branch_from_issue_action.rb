@@ -21,7 +21,13 @@ module Domain
         valid_attribute_or_select(
           attribute: :issue_key,
           text: 'Issue key is required',
-          options: proc { issue_client.fetch_recent_user_issues }
+          options: proc do 
+            fetch_user_issues
+              .fetch_user_issue_keys(Config.get("@issue_provider", "default_assignee_name")) 
+              .map do |issue| 
+                "#{ issue.key } > #{ issue.title }"
+              end
+          end
         ) { issue_key&.strip&.present? }
       end
 

@@ -186,7 +186,7 @@ module Clients
         Cache.set(*cache_keys, value: user_names)
       end
 
-      def fetch_recent_user_issues(user_name, limit: 20)
+      def fetch_user_issues(user_name, limit: 20)
         Log.info "Fetching recent issues for user '#{user_name}'..."
 
         user_id = fetch_user_id(user_name)
@@ -198,13 +198,13 @@ module Clients
         jql = "assignee = #{user_id} ORDER BY created DESC"
         encoded_jql = URI.encode_www_form_component(jql)
 
-        response = get("/rest/api/2/search?jql=#{encoded_jql}&maxResults=#{limit}&fields=key")
+        response = get("/rest/api/2/search?jql=#{encoded_jql}&maxResults=#{limit}&fields=key,summary,status,created,priority,issuetype")
         issues = response['issues']
 
         if issues && !issues.empty?
           Log.success "Found #{issues.size} recent issues for user '#{user_name}'"
 
-          issues.map { |issue| map_issue(issue) }
+          issues.map { |issue| issue["key"] }
         else
           Log.info "No issues found for user '#{user_name}'"
           []

@@ -171,7 +171,7 @@ module Domain
                           .select { |branch| branch_exists?(branch) }
 
         # Combiner les deux listes
-        (local_branches + remote_branches).uniq.sort
+        (local_branches + remote_branches).uniq
       end
 
       ### REMOTE ###

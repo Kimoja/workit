@@ -24,7 +24,6 @@ module Domain
           options: proc { possible_issue_keys },
           formatter: proc { |value| value.split(' > ').first },
         ) { issue_key&.strip&.present? }
-        raise
       end
 
       def possible_issue_keys

@@ -1,11 +1,12 @@
 module Features
   module Workflows
     class SetupGitBranchService < Service
-      attr_reader(:branch)
+      attr_reader(:branch, :base_branch)
 
       def call
         valid_attributes!
         summary
+
         Git.navigate_to_repo
         return if branch_is_current_branch?
 
@@ -23,11 +24,14 @@ module Features
 
       def summary
         Log.start("Setup Git branch: #{branch}")
-        Log.pad("- Branch: #{branch}")
+        Log.pad("- Branch name: #{branch}")
       end
 
       def valid_attributes!
-        valid_attribute_or_ask(:branch, 'Branch is required') { branch&.strip&.present? }
+        valid_attribute_or_ask(
+          attribute: :branch,
+          text: 'Branch name is required'
+        ) { branch&.strip&.present? }
       end
 
       def branch_is_current_branch?

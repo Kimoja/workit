@@ -10,7 +10,6 @@ module Domain
 
       def call
         summary
-        Git.navigate_to_repo
         branch_protected!
         push_branch
 
@@ -117,7 +116,7 @@ module Domain
       end
 
       memo def issue
-        find_issue
+        Workflows.find_issue_for_branch(branch, issue_client)
       end
 
       memo def title
@@ -146,16 +145,6 @@ module Domain
 
       memo def branch_type
         branch.split("/").first || "feat"
-      end
-
-      def find_issue
-        match = branch.match(/([A-Za-z]+)-(\d+)/)
-
-        return nil unless match
-
-        issue_key = "#{match[1]}-#{match[2]}"
-
-        issue_client.fetch_issue(issue_key)
       end
 
       def body

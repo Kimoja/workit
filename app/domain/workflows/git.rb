@@ -11,28 +11,6 @@ module Domain
 
       ### REPO ###
 
-      def navigate_to_repo(&fallback)
-        if repo_exists?('.')
-          Log.info 'Git repository found in current directory'
-          return
-        end
-
-        Log.info 'No git repository in current directory, searching in subdirectories'
-
-        Dir.glob('*/').each do |dir|
-          next unless repo_exists?(dir)
-
-          Log.info "Git repository found in #{dir}"
-          Dir.chdir(dir)
-          return
-        end
-
-        apply_fallback!(
-          fallback,
-          "No git repository found"
-        )
-      end
-
       def repo_exists?(path)
         File.directory?(File.join(path, '.git'))
       end

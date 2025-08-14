@@ -9,7 +9,6 @@ module Domain
         setup_and_valid_branch!
         summary
 
-        Git.navigate_to_repo
         return if branch_is_current_branch?
 
         stash_uncommited_changes

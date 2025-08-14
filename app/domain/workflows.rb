@@ -3,6 +3,8 @@ module Domain
     extend self
     include Domain
 
+    ### ACTIONS ###
+
     def setup_git_branch(...)
       Workflows::SetupGitBranchAction.call(...)
     end
@@ -17,6 +19,22 @@ module Domain
 
     def create_issue(...)
       Workflows::CreateIssueAction.call(...)
+    end
+
+    def setup_note_from_git_branch(...)
+      Workflows::SetupNoteFromGitBranchAction.call(...)
+    end
+
+    ### HELPERS ###
+
+    def find_issue_for_branch(branch, issue_client)
+      match = branch.match(/([A-Za-z]+)-(\d+)/)
+
+      return nil unless match
+
+      issue_key = "#{match[1]}-#{match[2]}"
+
+      issue_client.fetch_issue(issue_key)
     end
 
     #--

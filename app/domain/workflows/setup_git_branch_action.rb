@@ -6,7 +6,7 @@ module Domain
       attr_reader(:branch, :base_branch)
 
       def call
-        setup_and_valid_attributes!
+        setup_and_valid_branch!
         summary
 
         Git.navigate_to_repo
@@ -14,6 +14,8 @@ module Domain
 
         stash_uncommited_changes
         return if checkout_to_existing_branch?
+
+        setup_and_valid_base_branch!
 
         checkout_to_base_branch
         Git.create_branch(branch)
@@ -24,23 +26,11 @@ module Domain
 
       private
 
-      def setup_and_valid_attributes!
+      def setup_and_valid_branch!
         valid_attribute_or_ask(
           attribute: :branch,
           text: 'Branch name is required'
         ) { branch&.strip&.present? }
-
-        valid_attribute_or_select(
-          attribute: :base_branch,
-          text: 'Select base branch for the new branch:',
-          options: proc { Git.recent_branches },
-          default: proc { Git.main_branch }
-        ) { base_branch&.strip&.present? }
-      end
-
-      def recent_branches
-        Log.start("Setup Git branch: #{branch}")
-        Log.pad("- Branch name: #{branch}")
       end
 
       def summary
@@ -72,6 +62,20 @@ module Domain
         Log.success("Switched to branch '#{branch}'")
 
         true
+      end
+
+      def setup_and_valid_base_branch!
+        valid_attribute_or_select(
+          attribute: :base_branch,
+          text: 'Select base branch for the new branch:',
+          options: proc { Git.recent_branches },
+          default: proc { Git.main_branch }
+        ) { base_branch&.strip&.present? }
+      end
+
+      def recent_branches
+        Log.start("Setup Git branch: #{branch}")
+        Log.pad("- Branch name: #{branch}")
       end
 
       def checkout_to_base_branch

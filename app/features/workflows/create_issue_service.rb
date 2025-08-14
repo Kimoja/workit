@@ -39,7 +39,7 @@ module Features
         valid_attribute_or_select(
           attribute: :assignee_name,
           text: 'Assignee name is required',
-          options: issue_client.fetch_assignable_users(project_key),
+          options: issue_client.fetch_project_user_names(project_key),
           default: Config.get("@issue_provider", "default_assignee_name")
         ) { assignee_name&.strip&.present? }
       end
@@ -115,35 +115,35 @@ module Features
         return Log.pad 'Issue added to project backlog' if board_type == 'scrum' && sprint_id.nil?
         return Log.pad 'Issue added to active sprint' if board_type == 'scrum' && sprint_id
 
-        Log.pad 'Issue added to Kanban board'
+        Log.pad 'Issue added to Kanban project'
       end
 
       ### STATE ###
 
-      memo def board
-        board = issue_client.fetch_project_by_key(project_key)
-        return board if board
+      memo def project
+        project = issue_client.fetch_project(project_key)
+        return project if project
 
-        Log.error "Board '#{project_key}' not found"
-        Log.pad 'Available boards:'
-        boards.each { |b| Log.pad "- #{b['project_key']} (#{b['type']})" }
+        Log.error "Project '#{project_key}' not found"
+        Log.pad 'Available projects:'
+        issue_client.fetch_projects.each { |b| Log.pad "- #{b['project_key']} (#{b['type']})" }
 
-        raise "Board '#{project_key}' not found"
+        raise "Project '#{project_key}' not found"
       end
 
       memo def board_id
-        board['id']
+        project['board_id']
       end
 
       memo def board_type
-        board['type']
+        project['board_type']
       end
 
       memo def user_id
-        user = issue_client.fetch_user_by_name(assignee_name)
-        return user['accountId'] if user
+        user_id = issue_client.fetch_user_id(assignee_name)
+        return user_id if user_id
 
-        Log.warn "User '#{assignee_name}' not found, issue will be unassigned"
+        Log.warn "User '#{assignee_name}' id not found, issue will be unassigned"
         nil
       end
 
@@ -154,7 +154,7 @@ module Features
       memo def sprint_field_id
         return unless board_type == 'scrum'
 
-        id = issue_client.find_sprint_field_id
+        id = issue_client.fetch_sprint_field_id
         return id if id
 
         Log.warn "Error searching for sprint field_id: #{e.message}"

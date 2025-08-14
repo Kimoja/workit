@@ -18,10 +18,10 @@ module Clients
         new(base_url: url, token: Base64.strict_encode64("#{email}:#{token}"))
       end
 
-      def fetch_project_by_key(project_key)
+      def fetch_project(project_key)
         Log.info "Searching for project '#{project_key}'..."
 
-        project = fetch_project[project_key]
+        project = fetch_projects[project_key]
 
         if project
           Log.info "Project '#{project_key}' found"
@@ -35,14 +35,14 @@ module Clients
       def fetch_project_keys
         Log.info "Fetching project keys..."
 
-        projects = fetch_project
+        projects = fetch_projects
 
         Log.info "#{projects.size} Project keys found"
 
         projects.keys.sort
       end
 
-      def fetch_project
+      def fetch_projects
         Log.info "Fetching projects..."
 
         cache_keys = %w[jira projects]
@@ -55,75 +55,24 @@ module Clients
         boards = get('/rest/agile/1.0/board')['values']
 
         projects = boards.each_with_object({}) do |board, obj|
-          project_key = extract_board_project_key(board)
-          next unless project_key
+          next unless board['location'] && board['location']['projectKey']
+
+          project_key = board['location']['projectKey']
 
           obj[project_key] = {
-            'id' => board['id'],
-            'type' => board['type'],
-            'name' => board['name']
+            'board_id' => board['id'],
+            'board_type' => board['type'],
+            'board_typename' => board['name']
           }
         end
 
         Cache.set(*cache_keys, value: projects)
       end
 
-      def find_sprint_field_id
-        Log.info 'Searching for Sprint field ID...'
-
-        cache_keys = %w[jira sprint_field_id]
-
-        cached_result = Cache.get(*cache_keys)
-        if cached_result
-          Log.info 'Sprint field ID found in cache'
-          return cached_result
-        end
-
-        field = get('/rest/api/2/field').find { |f| f['name'] == 'Sprint' }
-
-        if field
-          Log.info "Sprint field found: #{field['id']}"
-          return Cache.set(*cache_keys, value: field['id'])
-        end
-
-        Log.warn 'Sprint field not found'
-        nil
-      end
-
-      def fetch_user_by_name(name)
-        Log.info "Searching for user '#{name}'..."
-
-        name_normalized = normalize_name(name)
-        cache_keys = %w[jira users]
-
-        cached_result = Cache.get(*cache_keys, name_normalized)
-        if cached_result
-          Log.info "User '#{name}' found in cache"
-          return cached_result
-        end
-
-        encoded_name = URI.encode_www_form_component(name)
-        response = get("/rest/api/3/user/search?query=#{encoded_name}")
-        user = response.find { |u| u['displayName'].match(/#{Regexp.escape(name)}/i) }
-
-        if user
-          Log.info "User found: #{user['displayName']}"
-          return Cache.set(
-            *cache_keys, normalize_name(user['displayName']), value: {
-              'account_id' => user['accountId'],
-              'display_name' => user['displayName']
-            }
-          )
-        end
-
-        Log.info "User '#{name}' not found"
-        nil
-      end
-
       def fetch_issue_types_for_project(project_key)
         Log.info "Searching issue types for project #{project_key}..."
 
-        cache_keys = ["jira", "issue_types", project_key]
+        cache_keys = ["jira", "projects", project_key, "issue_types"]
         cached_types = Cache.get(*cache_keys)
 
         if cached_types
@@ -145,6 +94,28 @@ module Clients
         nil
       end
 
+      def fetch_sprint_field_id
+        Log.info 'Searching for Sprint field ID...'
+
+        cache_keys = %w[jira sprint_field_id]
+
+        cached_result = Cache.get(*cache_keys)
+        if cached_result
+          Log.info 'Sprint field ID found in cache'
+          return cached_result
+        end
+
+        field = get('/rest/api/2/field').find { |f| f['name'] == 'Sprint' }
+
+        if field
+          Log.info "Sprint field found: #{field['id']}"
+          return Cache.set(*cache_keys, value: field['id'])
+        end
+
+        Log.warn 'Sprint field not found'
+        nil
+      end
+
       def fetch_active_sprint(board_id)
         Log.info 'Searching for active sprint...'
 
@@ -159,14 +130,40 @@ module Clients
         nil
       end
 
-      def fetch_assignable_users(project_key)
-        Log.info "Fetching recently active users for project #{project_key}..."
+      def fetch_user_id(name)
+        Log.info "Searching for user '#{name}' id ..."
 
-        cache_keys = ["jira", "recent_users", project_key]
+        cache_keys = %w[jira users]
+
+        cached_result = Cache.get(*cache_keys, name)
+        if cached_result
+          Log.info "User '#{name}' found in cache"
+          return cached_result
+        end
+
+        encoded_name = URI.encode_www_form_component(name)
+        response = get("/rest/api/3/user/search?query=#{encoded_name}")
+        user = response.find { |u| u['displayName'].match(/#{Regexp.escape(name)}/i) }
+
+        if user
+          Log.info "User found: #{user['displayName']}"
+          return Cache.set(
+            *cache_keys, user['displayName'], value: user['accountId']
+          )
+        end
+
+        Log.info "User '#{name}' id not found"
+        nil
+      end
+
+      def fetch_project_user_names(project_key)
+        Log.info "Fetching user names for project #{project_key}..."
+
+        cache_keys = ["jira", "projects", project_key, "recent_users"]
         cached_users = Cache.get(*cache_keys)
 
         if cached_users
-          Log.info "Recent users for project #{project_key} found in cache"
+          Log.info "User names for project #{project_key} found in cache"
           return cached_users
         end
 
@@ -175,14 +172,24 @@ module Clients
 
         recent_issues = get("/rest/api/2/search?jql=#{encoded_jql}&fields=assignee&maxResults=200")['issues']
 
-        assignees = recent_issues
-                    .filter_map { |issue| issue.dig('fields', 'assignee') }
-                    .uniq { |assignee| assignee['accountId'] }
+        users = recent_issues
+                .filter_map { |issue| issue.dig('fields', 'assignee') }
+                .uniq { |assignee| assignee['accountId'] }
+
+        users.each do |user|
+          Cache.set("jira", "users", user['displayName'], value: user['accountId'])
+        end
+
+        user_names = users
                     .map { |assignee| assignee['displayName'] }
                     .sort
 
-        Log.info "Found #{assignees.size} recently active users"
-        Cache.set(*cache_keys, value: assignees)
+        Log.info "Found #{user_names.size} user names for project  #{project_key}"
+        Cache.set(*cache_keys, value: user_names)
+      end
+
+      def fetch_issue(key)
+        map_issue(get("/rest/api/2/issue/#{key}"))
       end
 
       def create_issue(payload)
@@ -198,12 +205,6 @@ module Clients
         end
       end
 
-      ### -----------###
-
-      def fetch_issue(key)
-        map_issue(get("/rest/api/2/issue/#{key}"))
-      end
-
       def request(method, endpoint, body: nil, query: nil)
         super do |request|
           request['Authorization'] = "Basic #{token}"
@@ -215,16 +216,6 @@ module Clients
 
       def map_issue(raw_data)
         Models::JiraIssue.new(raw_data)
-      end
-
-      def extract_board_project_key(board)
-        return unless board['location'] && board['location']['projectKey']
-
-        board['location']['projectKey']
-      end
-
-      def normalize_name(name)
-        name.downcase.gsub(/\s+/, '_')
       end
     end
   end

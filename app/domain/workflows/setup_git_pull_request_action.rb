@@ -35,11 +35,19 @@ module Domain
       end
 
       def push_branch
-        Git.push_force_with_lease do
+        Git.push do
           Prompt.yes_no(
-            text: 'Do you want to push --force the branch?',
-            yes: proc { Git.push_force },
-            no: proc { false }
+            text: 'Do you want to push --force-with-lease the branch?',
+            yes: proc do
+              Git.push(options: '--force-with-lease') do
+                Prompt.yes_no(
+                  text: 'Do you want to push --force the branch?',
+                  yes: proc { Git.push(options: '--force') },
+                  no: proc { true }
+                )
+              end
+            end,
+            no: proc { true }
           )
         end
       end
@@ -49,22 +57,33 @@ module Domain
           owner, repo, branch
         )
 
-        if pull_request && pull_request['state'] == 'closed'
-          Log.warn "Existing Pull Request ##{pull_request['number']} is closed"
+        return pull_request if pull_request && pull_request['state'] == 'open'
+        return nil unless pull_request
 
-          Prompt.yes_no(
-            text: "Do you want to reopen the Pull Request?",
-            yes: proc {
-              pull_request = git_repo_client.reopen_pull_request(
-                owner, repo, branch
-              )
-            },
-            no: proc {
-              Log.info "Keeping Pull Request closed, will create a new one"
-              pull_request = nil
-            }
-          )
-        end
+        Log.warn "Found existing Pull Request ##{pull_request['number']} (#{pull_request['state']})"
+        Log.pad "Title: #{pull_request['title']}"
+        Log.pad "URL: #{pull_request['html_url']}"
+
+        Prompt.yes_no(
+          text: "Continue and create a new Pull Request?",
+          yes: proc {
+            Log.info "Proceeding to create a new Pull Request..."
+            pull_request = nil
+          },
+          no: proc do
+            unless pull_request['state'] == 'closed' && !pull_request['merged']
+              raise "Operation cancelled - no new Pull Request will be created"
+            end
+
+            Prompt.yes_no(
+              text: "Would you like to reopen the existing PR instead?",
+              yes: proc {
+                pull_request = git_repo_client.reopen_pull_request(owner, repo, pull_request['number'])
+              },
+              no: proc { raise "Operation cancelled - no new Pull Request will be created" }
+            )
+          end
+        )
 
         pull_request
       end

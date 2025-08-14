@@ -8,7 +8,7 @@ module Commands
       issue_key = ARGV[0]
       base_branch = options[:base_branch]
       issue_client = Clients::Issues.build_from_config!
-raise
+      raise
       Domain::Workflows.setup_git_branch_from_issue(
         issue_key: issue_key,
         base_branch: base_branch,

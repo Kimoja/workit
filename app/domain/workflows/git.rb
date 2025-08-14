@@ -17,7 +17,7 @@ module Domain
           return
         end
 
-        Log.info 'No git repository in current directory, searching in subdirectories...'
+        Log.info 'No git repository in current directory, searching in subdirectories'
 
         Dir.glob('*/').each do |dir|
           next unless repo_exists?(dir)
@@ -66,7 +66,7 @@ module Domain
       end
 
       def checkout(branch_name, &fallback)
-        Log.info "Switching to #{branch_name} branch..."
+        Log.info "Switching to #{branch_name} branch"
 
         system("git checkout #{branch_name}") || apply_fallback!(
           fallback,
@@ -119,7 +119,7 @@ module Domain
       end
 
       def base_branch(&fallback)
-        Log.info 'Searching for the base branch from remote branches...'
+        Log.info 'Searching for the base branch from remote branches'
 
         # Récupérer toutes les branches remote
         all_remote_branches = `git branch -r --format='%(refname:short)'`.lines.map(&:strip)
@@ -169,14 +169,13 @@ module Domain
                           .reject { |branch| branch.include?('/HEAD') || branch == "origin" }
                           .select { |branch| branch_exists?(branch) }
 
-        # Combiner les deux listes
         (local_branches + remote_branches).uniq
       end
 
       ### REMOTE ###
 
       def pull(&fallback)
-        Log.info 'Pulling latest changes with rebase...'
+        Log.info 'Pulling latest changes with rebase'
 
         system('git pull --rebase') || apply_fallback!(
           fallback,
@@ -184,21 +183,12 @@ module Domain
         )
       end
 
-      def push_force_with_lease(&fallback)
-        Log.info 'Pushing force with lease branch...'
+      def push(options: nil, &fallback)
+        Log.info "Pushing branch#{options && " with options #{options}"}"
 
-        system('git push --force-with-lease') || apply_fallback!(
+        system("git push #{options}") || apply_fallback!(
           fallback,
-          'Failed to push force with lease branch'
-        )
-      end
-
-      def push_force(&fallback)
-        Log.info 'Pushing force branch...'
-
-        system('git push --force') || apply_fallback!(
-          fallback,
-          'Failed to push force branch'
+          "Failed to push #{options && " with options #{options}"}"
         )
       end
 
@@ -221,10 +211,10 @@ module Domain
         )
       end
 
-      def commit(message, *options, &fallback)
-        Log.info "Creating commit with message: '#{message}'"
+      def commit(message, options: nil, &fallback)
+        Log.info "Creating commit #{options && " with options #{options} and"} with message: '#{message}'"
 
-        system("git add . && git commit -m '#{message}' #{options.join}") || apply_fallback!(
+        system("git add . && git commit -m '#{message}' #{options}") || apply_fallback!(
           fallback,
           'Failed to create commit'
         )
@@ -283,7 +273,7 @@ module Domain
       end
 
       def apply_fallback!(fallback, error_message)
-        Log.error(error_message)
+        Log.warn(error_message)
         # binding.pry
         fallback&.call || raise(error_message)
       end

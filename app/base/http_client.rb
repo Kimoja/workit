@@ -8,8 +8,16 @@ class HttpClient
     request('GET', endpoint, query:)
   end
 
-  def post(endpoint, body: nil)
-    request('POST', endpoint, body:)
+  def post(endpoint, query: nil, body: nil)
+    request('POST', endpoint, query:, body:)
+  end
+
+  def patch(endpoint, query: nil, body: nil)
+    request('PATCH', endpoint, query:, body:)
+  end
+
+  def put(endpoint, query: nil, body: nil)
+    request('PUT', endpoint, query:, body:)
   end
 
   def request(method, endpoint, body: nil, query: nil)

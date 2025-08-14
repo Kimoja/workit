@@ -19,7 +19,7 @@ module Domain
 
         checkout_to_base_branch
         Git.create_branch(branch)
-        Git.commit(commit_message, '--allow-empty')
+        Git.commit(commit_message, options: '--allow-empty')
 
         report
       end

@@ -10,7 +10,7 @@ module Action
   def ask_for_attribute(attribute:, text:, default: nil, formatter: nil)
     default = default.call if default.is_a?(Proc)
 
-    Prompt.ask(text:) do |response|
+    Prompt.ask(text:, default:) do |response|
       formatted_value = formatter ? formatter.call(response) : response
       instance_variable_set("@#{attribute}", formatted_value || default)
 

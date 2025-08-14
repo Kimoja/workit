@@ -24,14 +24,14 @@ module Clients
         Log.info "Reopening Pull Request ##{pr_number}..."
 
         body = { state: 'open' }
-        pr = patch("/repos/#{owner}/#{repo}/pulls/#{pr_number}", body: body)
+        pr = post("/repos/#{owner}/#{repo}/pulls/#{pr_number}", body: body)
 
         if pr && pr['state'] == 'open'
           Log.info "Pull Request ##{pr_number} reopened successfully"
           return pr
         end
 
-        Log.error "Failed to reopen Pull Request ##{pr_number}"
+        raise "Failed to reopen Pull Request ##{pr_number}"
       end
 
       def fetch_pull_request_commits(owner, repo, pr_number)
@@ -41,7 +41,7 @@ module Clients
       def fetch_pull_request_by_branch_name(owner, repo, branch_name)
         Log.info "Searching for Pull Request on branch '#{branch_name}'"
 
-        query = { head: "#{owner}:#{branch_name}" }
+        query = { head: "#{owner}:#{branch_name}", state: 'all' }
         pr = get("/repos/#{owner}/#{repo}/pulls", query:).first
 
         if pr

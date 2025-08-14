@@ -36,7 +36,6 @@ module Utils
       prompt_text += " (default: '#{default}')" if default
 
       response = prompt.select(prompt_text, options)
-      response = default if response.empty? && default
 
       return yield(response) if block_given?
 

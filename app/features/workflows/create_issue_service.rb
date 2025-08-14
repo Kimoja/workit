@@ -29,16 +29,18 @@ module Features
           default: Config.get("@issue_provider", "default_project_key")
         ) { project_key&.strip&.present? }
 
-        valid_attribute_or_ask(
+        valid_attribute_or_select(
           attribute: :issue_type,
           text: 'Issue type is required',
+          options: issue_types,
           default: Config.get("@issue_provider", "default_issue_type")
         ) { issue_type&.strip&.present? }
 
-        valid_attribute_or_ask(
+        valid_attribute_or_select(
           attribute: :assignee_name,
           text: 'Assignee name is required',
-          default: Config.get("@issue_provider", "assignee_name")
+          options: issue_client.fetch_assignable_users(project_key),
+          default: Config.get("@issue_provider", "default_assignee_name")
         ) { assignee_name&.strip&.present? }
       end
 
@@ -71,6 +73,31 @@ module Features
         issue_client.create_issue(payload)
       end
 
+      def validate_issue_type
+        unless issue_types
+          Log.warn 'Unable to validate issue type, using without validation'
+          return issue_type
+        end
+
+        exact_match = issue_types.find { |type| type.downcase == issue_type.downcase }
+        return exact_match if exact_match
+
+        partial_match = issue_types.find { |type| type.downcase.include?(issue_type.downcase) }
+        if partial_match
+          Log.info "Issue type found: '#{partial_match}' (partial match)"
+          return partial_match
+        end
+
+        # No match found
+        Log.warn "Issue type '#{issue_type}' not found"
+        Log.pad "Available types for project #{project_key}:"
+        issue_types.each { |type| Log.pad "- #{type}" }
+
+        Log.warn "Using specified type without validation: #{issue_type}"
+
+        issue_type
+      end
+
       def add_to_cache(issue)
         Cache.set(
           'last_issue_created',
@@ -94,7 +121,14 @@ module Features
       ### STATE ###
 
       memo def board
-        find_board
+        board = issue_client.fetch_project_by_key(project_key)
+        return board if board
+
+        Log.error "Board '#{project_key}' not found"
+        Log.pad 'Available boards:'
+        boards.each { |b| Log.pad "- #{b['project_key']} (#{b['type']})" }
+
+        raise "Board '#{project_key}' not found"
       end
 
       memo def board_id
@@ -106,46 +140,20 @@ module Features
       end
 
       memo def user_id
-        find_user_id
-      end
-
-      memo def sprint_field_id
-        board_type == 'scrum' ? find_sprint_field_id : nil
-      end
-
-      memo def sprint_id
-        board_type == 'scrum' ? find_active_sprint : nil
-      end
-
-      def find_board
-        board = issue_client.fetch_board_by_project_key(project_key)
-        return board if board
-
-        Log.error "Board '#{project_key}' not found"
-        Log.pad 'Available boards:'
-        boards.each { |b| Log.pad "- #{b['project_key']} (#{b['type']})" }
-
-        raise "Board '#{project_key}' not found"
-      end
-
-      def find_user_id
         user = issue_client.fetch_user_by_name(assignee_name)
         return user['accountId'] if user
 
-        Log.warn "User '#{name}' not found, issue will be unassigned"
+        Log.warn "User '#{assignee_name}' not found, issue will be unassigned"
         nil
       end
 
-      def find_active_sprint
-        sprint = issue_client.fetch_active_sprint(board_id)
-        return sprint if sprint
-
-        Log.warn "Error searching for sprint: #{e.message}"
-        Log.pad 'Issue will be created in backlog'
-        nil
+      memo def issue_types
+        issue_client.fetch_issue_types_for_project(project_key)
       end
 
-      def find_sprint_field_id
+      memo def sprint_field_id
+        return unless board_type == 'scrum'
+
         id = issue_client.find_sprint_field_id
         return id if id
 
@@ -154,31 +162,15 @@ module Features
         nil
       end
 
-      def validate_issue_type
-        available_types = issue_client.fetch_issue_types_for_project(project_key)
+      memo def sprint_id
+        return unless board_type == 'scrum'
 
-        unless available_types
-          Log.warn 'Unable to validate issue type, using without validation'
-          return issue_type
-        end
+        sprint = issue_client.fetch_active_sprint(board_id)
+        return sprint if sprint
 
-        exact_match = available_types.find { |type| type.downcase == issue_type.downcase }
-        return exact_match if exact_match
-
-        partial_match = available_types.find { |type| type.downcase.include?(issue_type.downcase) }
-        if partial_match
-          Log.info "Issue type found: '#{partial_match}' (partial match)"
-          return partial_match
-        end
-
-        # No match found
-        Log.warn "Issue type '#{issue_type}' not found"
-        Log.pad "Available types for project #{project_key}:"
-        available_types.each { |type| Log.pad "- #{type}" }
-
-        Log.warn "Using specified type without validation: #{issue_type}"
-
-        issue_type
+        Log.warn "Error searching for sprint: #{e.message}"
+        Log.pad 'Issue will be created in backlog'
+        nil
       end
     end
   end

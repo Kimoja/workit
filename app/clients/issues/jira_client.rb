@@ -18,65 +18,54 @@ module Clients
         new(base_url: url, token: Base64.strict_encode64("#{email}:#{token}"))
       end
 
-      def fetch_board_by_project_key(project_key)
-        Log.info "Searching for board '#{project_key}'..."
+      def fetch_project_by_key(project_key)
+        Log.info "Searching for project '#{project_key}'..."
 
-        project_key_normalized = normalize_project_key(project_key)
-        board = Cache.get("jira", "boards", project_key_normalized)
+        project = fetch_project[project_key]
 
-        if board
-          Log.info "Board '#{project_key}' found in cache"
-          return board
+        if project
+          Log.info "Project '#{project_key}' found"
+          return project
         end
 
-        fetch_boards_and_refresh_cache
-        board = Cache.get("jira", "boards", project_key_normalized)
-
-        if board
-          Log.info "Board '#{project_key}' found"
-          return board
-        end
-
-        Log.info "Board '#{project_key}' not found"
+        Log.info "Project '#{project_key}' not found"
         nil
       end
 
       def fetch_project_keys
-        Log.info "Fetching project_keys..."
+        Log.info "Fetching project keys..."
 
-        boards = Cache.get("jira", "boards")
-        if boards
-          Log.info "Project keys found in cache"
-          return boards.keys
-        end
+        projects = fetch_project
 
-        fetch_boards_and_refresh_cache
-        boards = Cache.get("jira", "boards")
+        Log.info "#{projects.size} Project keys found"
 
-        Log.info "#{boards.size} Project keys found"
-
-        boards.keys.sort
+        projects.keys.sort
       end
 
-      def fetch_boards_and_refresh_cache
-        Log.info "Fetching available boards..."
+      def fetch_project
+        Log.info "Fetching projects..."
+
+        cache_keys = %w[jira projects]
+        projects = Cache.get(*cache_keys)
+        if projects
+          Log.info "Project found in cache"
+          return projects
+        end
 
         boards = get('/rest/agile/1.0/board')['values']
 
-        boards.filter_map do |board|
+        projects = boards.each_with_object({}) do |board, obj|
           project_key = extract_board_project_key(board)
           next unless project_key
 
-          Cache.set(
-            "jira", "boards", project_key,
-            value: {
-              'id' => board['id'],
-              'type' => board['type'],
-              'name' => board['name'],
-              'project_key' => project_key
-            }
-          )
+          obj[project_key] = {
+            'id' => board['id'],
+            'type' => board['type'],
+            'name' => board['name']
+          }
         end
+
+        Cache.set(*cache_keys, value: projects)
       end
 
       def find_sprint_field_id
@@ -110,7 +99,7 @@ module Clients
         cached_result = Cache.get(*cache_keys, name_normalized)
         if cached_result
           Log.info "User '#{name}' found in cache"
-          return cached_result['account_id']
+          return cached_result
         end
 
         encoded_name = URI.encode_www_form_component(name)
@@ -170,6 +159,32 @@ module Clients
         nil
       end
 
+      def fetch_assignable_users(project_key)
+        Log.info "Fetching recently active users for project #{project_key}..."
+
+        cache_keys = ["jira", "recent_users", project_key]
+        cached_users = Cache.get(*cache_keys)
+
+        if cached_users
+          Log.info "Recent users for project #{project_key} found in cache"
+          return cached_users
+        end
+
+        jql = "project = #{project_key} AND updated >= -60d"
+        encoded_jql = URI.encode_www_form_component(jql)
+
+        recent_issues = get("/rest/api/2/search?jql=#{encoded_jql}&fields=assignee&maxResults=200")['issues']
+
+        assignees = recent_issues
+                    .filter_map { |issue| issue.dig('fields', 'assignee') }
+                    .uniq { |assignee| assignee['accountId'] }
+                    .map { |assignee| assignee['displayName'] }
+                    .sort
+
+        Log.info "Found #{assignees.size} recently active users"
+        Cache.set(*cache_keys, value: assignees)
+      end
+
       def create_issue(payload)
         Log.info 'Creating issue...'
 
@@ -202,14 +217,10 @@ module Clients
         Models::JiraIssue.new(raw_data)
       end
 
-      def normalize_project_key(project_key)
-        project_key.downcase.gsub(/\s+/, '_')
-      end
-
       def extract_board_project_key(board)
         return unless board['location'] && board['location']['projectKey']
 
-        normalize_project_key(board['location']['projectKey'])
+        board['location']['projectKey']
       end
 
       def normalize_name(name)

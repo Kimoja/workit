@@ -24,6 +24,11 @@ module Commands
           options[:type] = type
         end
 
+        opts.on('-a', '--assignee_name ASSIGNEE_NAME', 'Assignee name (default: from config.json)',
+                'Specify who will be assigned to this issue') do |assignee_name|
+          options[:assignee_name] = assignee_name
+        end
+
         opts.on('-h', '--help', 'Show this help') do
           Log.log opts
           Log.log ''
@@ -31,7 +36,9 @@ module Commands
           Log.log '  issue "Fix login bug"'
           Log.log '  issue -b KRAFT "Implement new feature"'
           Log.log '  issue -t Bug "Fix image display"'
+          Log.log '  issue -a john.doe "Review code changes"'
           Log.log '  issue -b BT -t Task "User interface"'
+          Log.log '  issue -b KRAFT -t Story -a jane.smith "Add new dashboard"'
           Log.log ''
           Log.log 'Configuration:'
           Log.log '  The command uses the config.json configuration file'
@@ -44,6 +51,11 @@ module Commands
           Log.log '  • Scrum boards: issue added to active sprint or backlog'
           Log.log '  • Kanban boards: issue added directly to board'
           Log.log '  • No active sprint: issue added to backlog'
+          Log.log ''
+          Log.log 'Assignment:'
+          Log.log '  • Use -a to specify assignee (username or display name)'
+          Log.log '  • Default assignee comes from config.json'
+          Log.log '  • Leave unassigned if no default configured'
           exit
         end
       end.parse!
@@ -51,7 +63,7 @@ module Commands
       title = ARGV[0]
       project_key = options[:project_key]
       issue_type = options[:type]
-      assignee_name = Config.get("@issue_provider", "default_assignee_name")
+      assignee_name = options[:assignee_name]
 
       issue_client = Clients::Issues.build_from_config!
 

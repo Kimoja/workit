@@ -7,7 +7,7 @@ ruby_commands=(
   "setup-git-branch;SetupGitBranchCommand;branch"
   "setup-git-branch-issue;SetupGitBranchFromIssueCommand;branch-issue"
   "setup-git-pull-request;SetupGitPullRequestCommand;pr"
-  "setup-note-git-branch;SetupNotesFromGitBranchCommand;note"
+  "setup-note-git-branch;SetupNoteFromGitBranchCommand;note"
 
 
   "setup-workflow;SetupWorkflowCommand;flow"

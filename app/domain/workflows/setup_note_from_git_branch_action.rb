@@ -73,7 +73,7 @@ module Domain
         note_dir = File.join(notes_dir, folder_name)
         index_file = File.join(note_dir, 'index.md')
 
-        Log.info "Creating directory: #{File.relative_path(note_dir)}"
+        Log.info "Creating directory: #{note_dir}"
         FileUtils.mkdir_p(note_dir)
 
         # Créer le contenu du fichier

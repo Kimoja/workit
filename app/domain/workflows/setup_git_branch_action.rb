@@ -70,9 +70,7 @@ module Domain
       end
 
       def checkout_to_base_branch
-        current_branch = Git.current_branch
-
-        Git.checkout(main_branch) unless base_branch == current_branch
+        Git.checkout(main_branch) unless base_branch == Git.current_branch
 
         pull_if_remote('Do you want to continue without pulling the base branch?')
       end

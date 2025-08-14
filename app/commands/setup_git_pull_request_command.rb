@@ -5,8 +5,8 @@ module Commands
     def call
       parse_options
 
-      git_repo_client = Clients::GithubClient.build_from_config!
-      issue_client = Clients::JiraClient.build_from_config!
+      git_repo_client = Clients::GitRepositories.build_from_config!
+      issue_client = Clients::Issues.build_from_config!
 
       Domain::Workflows.setup_git_pull_request(
         git_repo_client: git_repo_client,

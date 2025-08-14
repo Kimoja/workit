@@ -9,7 +9,7 @@ module Clients
 
       case git_repository_provider
       when 'github'
-        Clients::GitRepositories::Github.build_from_config!
+        Clients::GitRepositories::GithubClient.build_from_config!
       else
         raise "Unsupported git repository provider type: #{git_repository_provider}"
       end

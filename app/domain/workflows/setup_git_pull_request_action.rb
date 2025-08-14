@@ -122,7 +122,7 @@ module Domain
       end
 
       memo def owner
-        owner
+        repo_info[:owner]
       end
 
       memo def branch_type

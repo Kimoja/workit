@@ -31,7 +31,7 @@ begin
   # rubocop:enable Security/Eval
   # rubocop:enable Style/DocumentDynamicEvalDefinition
 rescue StandardError => e
-  Utils::Log.error e.message if e.message
+  Utils::Log.error(e.message || e)
   e.backtrace[0..20].each { |line| Utils::Log.log line }
 ensure
   Utils::Cache.save

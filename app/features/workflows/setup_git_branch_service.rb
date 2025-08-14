@@ -4,9 +4,8 @@ module Features
       attr_reader(:branch)
 
       def call
-        summary
-
         valid_attributes!
+        summary
         Git.navigate_to_repo
         return if branch_is_current_branch?
 

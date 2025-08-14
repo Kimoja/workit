@@ -6,10 +6,10 @@ module Clients
         email = Config.get('jira', 'email')
         token = Config.get('jira', 'token')
 
-        raise "Configuration parameter 'jira.url' is required" if url.nil? || token.strip.empty?
+        raise "Configuration parameter 'jira.url' is required" if url.nil? || url.strip.empty?
 
         unless url.match?(%r{\Ahttps?://.+\.atlassian\.net\z})
-          raise "Warning: Jira URL doesn't appear to be a standard Atlassian URL, configured URL: #{url}"
+          raise "Jira URL doesn't appear to be a standard Atlassian URL. Configured URL: #{url}"
         end
 
         raise "Configuration parameter 'jira.email' is required" if email.nil? || email.strip.empty?
@@ -28,7 +28,7 @@ module Clients
           return project
         end
 
-        Log.info "Project '#{project_key}' not found"
+        Log.warn "Project '#{project_key}' not found"
         nil
       end
 
@@ -37,8 +37,7 @@ module Clients
 
         projects = fetch_projects
 
-        Log.info "#{projects.size} Project keys found"
-
+        Log.info "#{projects.size} project keys found"
         projects.keys.sort
       end
 
@@ -48,7 +47,7 @@ module Clients
         cache_keys = %w[jira projects]
         projects = Cache.get(*cache_keys)
         if projects
-          Log.info "Project found in cache"
+          Log.info "Projects found in cache"
           return projects
         end
 
@@ -62,21 +61,22 @@ module Clients
           obj[project_key] = {
             'board_id' => board['id'],
             'board_type' => board['type'],
-            'board_typename' => board['name']
+            'board_name' => board['name']
           }
         end
 
-        Cache.set(*cache_keys, value: projects)
+        Log.info "#{projects.size} projects found"
+        Cache.set(*cache_keys, value: projects, ttl: 1.week)
       end
 
       def fetch_issue_types_for_project(project_key)
-        Log.info "Searching issue types for project #{project_key}..."
+        Log.info "Searching issue types for project '#{project_key}'..."
 
         cache_keys = ["jira", "projects", project_key, "issue_types"]
         cached_types = Cache.get(*cache_keys)
 
         if cached_types
-          Log.info "Issue types for project #{project_key} found in cache"
+          Log.info "Issue types for project '#{project_key}' found in cache"
           return cached_types
         end
 
@@ -87,10 +87,10 @@ module Clients
         if project
           Log.info "Issue types found for project '#{project_key}'"
           issue_types = project['issuetypes'].map { |type| type['name'] }
-          return Cache.set(*cache_keys, value: issue_types)
+          return Cache.set(*cache_keys, value: issue_types, ttl: 1.week)
         end
 
-        Log.info "Issue types not found for project '#{project_key}'"
+        Log.warn "Issue types not found for project '#{project_key}'"
         nil
       end
 
@@ -109,7 +109,7 @@ module Clients
 
         if field
           Log.info "Sprint field found: #{field['id']}"
-          return Cache.set(*cache_keys, value: field['id'])
+          return Cache.set(*cache_keys, value: field['id'], ttl: 1.year)
         end
 
         Log.warn 'Sprint field not found'
@@ -117,7 +117,7 @@ module Clients
       end
 
       def fetch_active_sprint(board_id)
-        Log.info 'Searching for active sprint...'
+        Log.info "Searching for active sprint on board #{board_id}..."
 
         active_sprint = get("/rest/agile/1.0/board/#{board_id}/sprint?state=active")['values'].first
 
@@ -131,7 +131,7 @@ module Clients
       end
 
       def fetch_user_id(name)
-        Log.info "Searching for user '#{name}' id ..."
+        Log.info "Searching for user ID for '#{name}'..."
 
         cache_keys = %w[jira users]
 
@@ -147,23 +147,21 @@ module Clients
 
         if user
           Log.info "User found: #{user['displayName']}"
-          return Cache.set(
-            *cache_keys, user['displayName'], value: user['accountId']
-          )
+          return Cache.set(*cache_keys, user['displayName'], value: user['accountId'], ttl: 1.year)
         end
 
-        Log.info "User '#{name}' id not found"
+        Log.warn "User '#{name}' not found"
         nil
       end
 
       def fetch_project_user_names(project_key)
-        Log.info "Fetching user names for project #{project_key}..."
+        Log.info "Fetching user names for project '#{project_key}'..."
 
         cache_keys = ["jira", "projects", project_key, "recent_users"]
         cached_users = Cache.get(*cache_keys)
 
         if cached_users
-          Log.info "User names for project #{project_key} found in cache"
+          Log.info "User names for project '#{project_key}' found in cache"
           return cached_users
         end
 
@@ -177,30 +175,56 @@ module Clients
                 .uniq { |assignee| assignee['accountId'] }
 
         users.each do |user|
-          Cache.set("jira", "users", user['displayName'], value: user['accountId'])
+          Cache.set("jira", "users", user['displayName'], value: user['accountId'], ttl: 1.year)
         end
 
         user_names = users
-                    .map { |assignee| assignee['displayName'] }
-                    .sort
+                     .map { |assignee| assignee['displayName'] }
+                     .sort
 
-        Log.info "Found #{user_names.size} user names for project  #{project_key}"
+        Log.info "Found #{user_names.size} user names for project '#{project_key}'"
         Cache.set(*cache_keys, value: user_names)
       end
 
       def fetch_issue(key)
-        map_issue(get("/rest/api/2/issue/#{key}"))
+        Log.info "Fetching issue '#{key}'..."
+        issue = map_issue(get("/rest/api/2/issue/#{key}"))
+        Log.info "Issue '#{key}' retrieved successfully"
+        issue
       end
 
-      def create_issue(payload)
+      def create_issue(
+        project_key:,
+        title:,
+        issue_type:,
+        user_id:,
+        sprint_field_id:,
+        sprint_id:,
+        description: 'Issue created automatically via Ruby CLI script'
+      )
         Log.info 'Creating issue...'
+
+        payload = {
+          fields: {
+            project: { key: project_key },
+            summary: title,
+            description:,
+            issuetype: { name: issue_type }
+          }
+        }
+
+        payload[:fields][sprint_field_id] = sprint_id if sprint_field_id && sprint_id
+        payload[:fields][:assignee] = { accountId: user_id } if user_id
+
+        binding.pry
+        raise
 
         begin
           issue = post('/rest/api/2/issue', payload)
           Log.info "Issue created successfully: #{issue['key']}"
           map_issue(issue)
         rescue StandardError => e
-          Log.error "Error creating issue: #{e.message}"
+          Log.error "Failed to create issue: #{e.message}"
           raise
         end
       end

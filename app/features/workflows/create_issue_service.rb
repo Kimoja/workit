@@ -53,24 +53,14 @@ module Features
       end
 
       def create_issue
-        validated_issue_type = validate_issue_type
-
-        payload = {
-          fields: {
-            project: { key: project_key },
-            summary: title,
-            description: 'Issue created automatically via Ruby CLI script',
-            issuetype: { name: validated_issue_type }
-          }
-        }
-
-        payload[:fields][sprint_field_id] = sprint_id if sprint_id && sprint_field_id
-        payload[:fields][:assignee] = { id: user_id } if user_id
-
-        binding.pry
-        raise
-
-        issue_client.create_issue(payload)
+        issue_client.create_issue(
+          project_key:,
+          title:,
+          issue_type: validate_issue_type,
+          user_id:,
+          sprint_id:,
+          sprint_field_id: sprint_id ? sprint_field_id : nil
+        )
       end
 
       def validate_issue_type
@@ -88,13 +78,11 @@ module Features
           return partial_match
         end
 
-        # No match found
         Log.warn "Issue type '#{issue_type}' not found"
-        Log.pad "Available types for project #{project_key}:"
+        Log.pad "Available types for project '#{project_key}':"
         issue_types.each { |type| Log.pad "- #{type}" }
 
-        Log.warn "Using specified type without validation: #{issue_type}"
-
+        Log.warn "Using specified type without validation: '#{issue_type}'"
         issue_type
       end
 
@@ -115,7 +103,7 @@ module Features
         return Log.pad 'Issue added to project backlog' if board_type == 'scrum' && sprint_id.nil?
         return Log.pad 'Issue added to active sprint' if board_type == 'scrum' && sprint_id
 
-        Log.pad 'Issue added to Kanban project'
+        Log.pad 'Issue added to Kanban board'
       end
 
       ### STATE ###
@@ -126,7 +114,7 @@ module Features
 
         Log.error "Project '#{project_key}' not found"
         Log.pad 'Available projects:'
-        issue_client.fetch_projects.each { |b| Log.pad "- #{b['project_key']} (#{b['type']})" }
+        issue_client.fetch_projects.each { |key, proj| Log.pad "- #{key} (#{proj['board_type']})" }
 
         raise "Project '#{project_key}' not found"
       end
@@ -143,7 +131,7 @@ module Features
         user_id = issue_client.fetch_user_id(assignee_name)
         return user_id if user_id
 
-        Log.warn "User '#{assignee_name}' id not found, issue will be unassigned"
+        Log.warn "User '#{assignee_name}' not found, issue will be unassigned"
         nil
       end
 
@@ -154,23 +142,35 @@ module Features
       memo def sprint_field_id
         return unless board_type == 'scrum'
 
-        id = issue_client.fetch_sprint_field_id
-        return id if id
+        begin
+          id = issue_client.fetch_sprint_field_id
+          return id if id
 
-        Log.warn "Error searching for sprint field_id: #{e.message}"
-        Log.pad 'Issue will be created in backlog'
-        nil
+          Log.warn 'Sprint field ID not found'
+          Log.pad 'Issue will be created in backlog'
+          nil
+        rescue StandardError => e
+          Log.warn "Error searching for sprint field ID: #{e.message}"
+          Log.pad 'Issue will be created in backlog'
+          nil
+        end
       end
 
       memo def sprint_id
         return unless board_type == 'scrum'
 
-        sprint = issue_client.fetch_active_sprint(board_id)
-        return sprint if sprint
+        begin
+          sprint = issue_client.fetch_active_sprint(board_id)
+          return sprint if sprint
 
-        Log.warn "Error searching for sprint: #{e.message}"
-        Log.pad 'Issue will be created in backlog'
-        nil
+          Log.info 'No active sprint found'
+          Log.pad 'Issue will be created in backlog'
+          nil
+        rescue StandardError => e
+          Log.warn "Error searching for active sprint: #{e.message}"
+          Log.pad 'Issue will be created in backlog'
+          nil
+        end
       end
     end
   end

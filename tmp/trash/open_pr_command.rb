@@ -5,11 +5,11 @@ module Commands
 
       Log.log '🚀 Open PR from current branch'
 
-      Features::Workflows::Git.navigate_to_repo
+      Domain::Workflows::Git.navigate_to_repo
 
       repo = github_repo_info[:repo]
       owner = github_repo_info[:owner]
-      branch_name = Features::Workflows::Git.current_branch
+      branch_name = Domain::Workflows::Git.current_branch
 
       pr = Cache.get("pr_#{repo}_#{branch_name}") || git_repo_client.fetch_pull_request_by_branch_name(owner, repo,
                                                                                                        branch_name)

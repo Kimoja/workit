@@ -13,9 +13,7 @@ require 'active_support/all'
 
 loader = Zeitwerk::Loader.new
 loader.push_dir('app')
-# loader.collapse("app/clients")
-# loader.collapse("app/features")
-loader.collapse('app/lib')
+loader.collapse('app/base')
 loader.setup
 
 APP_PATH = Dir.pwd
@@ -33,8 +31,8 @@ begin
   # rubocop:enable Security/Eval
   # rubocop:enable Style/DocumentDynamicEvalDefinition
 rescue StandardError => e
-  Utils::Log.error e.message if e.message
-  e.backtrace[0..20].each { |line| Utils::Log.log line }
+  Domain::Log.error e.message if e.message
+  e.backtrace[0..20].each { |line| Domain::Log.log line }
 ensure
-  Utils::Cache.save
+  Domain::Cache.save
 end

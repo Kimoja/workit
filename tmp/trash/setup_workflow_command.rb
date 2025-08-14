@@ -3,7 +3,7 @@ module Commands
     def call
       parse_options!
 
-      branch_name = ARGV[0] || Features::Workflows::Git.current_branch
+      branch_name = ARGV[0] || Domain::Workflows::Git.current_branch
       issue = options[:issue]
       last_issue = Cache.get('last_issue.issue_key')
 
@@ -25,7 +25,7 @@ module Commands
       Log.log "Issue: #{issue}"
       Log.log ''
 
-      Features::Workflows.setup_workflow(
+      Domain::Workflows.setup_workflow(
         branch_name:,
         issue_key: issue,
         git_repo_client:,

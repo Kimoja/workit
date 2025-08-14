@@ -1,7 +1,11 @@
-class Service < Callable
+module Action
   include AttributeInitializer
   include Utils
-  include Uinit::Memoizable
+
+  def self.included(base)
+    base.include Callable
+    base.include Uinit::Memoizable
+  end
 
   def valid_attribute_or_ask(attribute:, text:, default: nil, &validator)
     return if validator.call

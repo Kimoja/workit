@@ -1,6 +1,7 @@
-module Features
+module Domain
   module Workflows
-    class SetupWorkflowService < Service
+    class SetupWorkflowAction
+      include Action
       attr_reader(
         :branch_name,
         :issue_key,
@@ -92,7 +93,7 @@ module Features
       def create_pull_request
         Log.info 'Creating pull request...'
 
-        Features::Workflows.create_pull_request.call(
+        Domain::Workflows.create_pull_request.call(
           title: commit_message,
           head: branch_name,
           base: Git.main_branch_name,

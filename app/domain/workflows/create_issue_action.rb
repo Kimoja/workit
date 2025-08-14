@@ -1,6 +1,9 @@
-module Features
+module Domain
   module Workflows
-    class CreateIssueService < Service
+    class CreateIssueAction
+      include Action
+      include Domain
+
       attr_reader :title, :project_key, :issue_type, :assignee_name, :issue_client
 
       def call

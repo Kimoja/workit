@@ -1,6 +1,8 @@
-module Features
+module Domain
   module Workflows
-    class SetupGitPullRequestService < Service
+    class SetupGitPullRequestAction
+      include Action
+
       attr_reader(
         :git_repo_client,
         :issue_client

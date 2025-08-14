@@ -1,32 +1,32 @@
-module Features
+module Domain
   module Workflows
     extend self
-    include Utils
+    include Domain
 
     def setup_git_branch(...)
-      Workflows::SetupGitBranchService.call(...)
+      Workflows::SetupGitBranchAction.call(...)
     end
 
     def setup_git_branch_from_issue(...)
-      Workflows::SetupGitBranchFromIssueService.call(...)
+      Workflows::SetupGitBranchFromIssueAction.call(...)
     end
 
     def setup_git_pull_request(...)
-      Workflows::SetupGitPullRequestService.call(...)
+      Workflows::SetupGitPullRequestAction.call(...)
     end
 
     def create_issue(...)
-      Workflows::CreateIssueService.call(...)
+      Workflows::CreateIssueAction.call(...)
     end
 
     #--
 
     def setup_workflow(...)
-      Workflows::SetupWorkflowService.call(...)
+      Workflows::SetupWorkflowAction.call(...)
     end
 
     def create_pull_request(...)
-      Workflows::CreatePullRequestService.call(...)
+      Workflows::CreatePullRequestAction.call(...)
     end
 
     def get_existing_pull_request(provider:, owner:, repo:, branch_name:, git_repo_client:)

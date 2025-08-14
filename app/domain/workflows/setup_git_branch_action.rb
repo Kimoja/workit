@@ -1,6 +1,8 @@
-module Features
+module Domain
   module Workflows
-    class SetupGitBranchService < Service
+    class SetupGitBranchAction
+      include Action
+
       attr_reader(:branch, :base_branch)
 
       def call

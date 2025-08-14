@@ -1,6 +1,6 @@
 module Clients
   module Issues
-    class JiraClient < Client
+    class JiraClient < HttpClient
       def self.build_from_config!
         url = Config.get('jira', 'url')
         email = Config.get('jira', 'email')

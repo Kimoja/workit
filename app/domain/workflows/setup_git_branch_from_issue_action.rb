@@ -1,6 +1,8 @@
-module Features
+module Domain
   module Workflows
-    class SetupGitBranchFromIssueService < Service
+    class SetupGitBranchFromIssueAction
+      include Action
+
       attr_reader(:issue_key, :issue_client, :issue)
 
       def call

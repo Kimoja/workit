@@ -1,5 +1,6 @@
-module Features
-  class CreateGitBumpService < Service
+module Domain
+  class CreateGitBumpAction
+      include Action
     attr_reader(
       :branch_name,
       :git_repo_client,

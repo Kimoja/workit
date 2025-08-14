@@ -1,6 +1,7 @@
-module Features
+module Domain
   module Workflows
-    class CreatePullRequestService < Service
+    class CreatePullRequestAction
+      include Action
       attr_reader(
         :title,
         :head,

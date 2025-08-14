@@ -1,6 +1,6 @@
 module Clients
   module GitRepositories
-    class GithubClient < Client
+    class GithubClient < HttpClient
       BASE_URL = 'https://api.github.com'
 
       def self.build_from_config!

@@ -1,4 +1,4 @@
-class Client
+class HttpClient
   include AttributeInitializer
   include Utils
 

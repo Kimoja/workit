@@ -1,4 +1,4 @@
-module Utils
+module Domain
   module Git2
     extend self
 

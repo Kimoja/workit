@@ -18,18 +18,11 @@ module Domain
       private
 
       def valid_attributes!
-        if issue_key.nil? || issue_key.strip.empty?
-          last_issue_created = Cache.get('last_issue_created')
-
-          if last_issue_created
-            Prompt.yes_no(
-              text: "Issue key missing. Would you like to use the last created issue '#{last_issue_key}'?",
-              yes: proc { @issue_key = last_issue_created["issue_key"] }
-            )
-          end
-        end
-
-        valid_attribute_or_ask(:issue_key, 'Issue key is required') { issue_key&.strip&.present? }
+        valid_attribute_or_select(
+          attribute: :issue_key,
+          text: 'Issue key is required',
+          options: proc { issue_client.fetch_recent_user_issues }
+        ) { issue_key&.strip&.present? }
       end
 
       def summary

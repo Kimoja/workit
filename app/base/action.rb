@@ -8,6 +8,8 @@ module Action
   end
 
   def ask_for_attribute(attribute:, text:, default: nil)
+    default = default.is_a?(Proc) ? default.call : default
+
     Prompt.ask(text:) do |response|
       instance_variable_set("@#{attribute}", response || default)
 
@@ -24,6 +26,9 @@ module Action
   end
 
   def select_for_attribute(attribute:, text:, options:, default: nil)
+    options = options.is_a?(Proc) ? options.call : options
+    default = default.is_a?(Proc) ? default.call : default
+
     options.delete(default)
     options.unshift(default)
 

@@ -28,7 +28,7 @@ module Domain
         valid_attribute_or_select(
           attribute: :project_key,
           text: 'Project key is required',
-          options: issue_client.fetch_project_keys,
+          options: proc { issue_client.fetch_project_keys },
           default: Config.get("@issue_provider", "default_project_key")
         ) { project_key&.strip&.present? }
 
@@ -42,7 +42,7 @@ module Domain
         valid_attribute_or_select(
           attribute: :assignee_name,
           text: 'Assignee name is required',
-          options: issue_client.fetch_project_user_names(project_key),
+          options: proc { issue_client.fetch_project_user_names(project_key) },
           default: Config.get("@issue_provider", "default_assignee_name")
         ) { assignee_name&.strip&.present? }
       end

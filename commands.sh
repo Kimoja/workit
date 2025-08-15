@@ -26,6 +26,14 @@ setup-note-git-branch() {
   )
 }
 
+setup-workflow() {
+  local base_dir="$PWD"
+  (
+    cd "$SCRIPT_DIR"
+    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupWorkflowCommand" "$@"
+  )
+}
+
 create-issue() {
   local base_dir="$PWD"
   (
@@ -46,6 +54,7 @@ setup-git-branch() {
 alias branch-issue='setup-git-branch-issue'
 alias pr='setup-git-pull-request'
 alias note='setup-note-git-branch'
+alias flow='setup-workflow'
 alias issue='create-issue'
 alias branch='setup-git-branch'
 
@@ -61,6 +70,9 @@ workit-help() {
   echo ""
   echo "    setup-note-git-branch (note)"
   echo "      Create notes with branch and issue context"
+  echo ""
+  echo "    setup-workflow (flow)"
+  echo "      Interactive development workflow (issue → branch → notes → PR)"
   echo ""
   echo "    create-issue (issue)"
   echo "      Create issue via API with automatic sprint assignment"

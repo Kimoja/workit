@@ -18,7 +18,7 @@ module Utils
     end
     # rubocop:enable Naming/MethodParameterName
 
-    def ask(text:, default: nil, formatter: nil)
+    def ask(text, default: nil, formatter: nil)
       Play.promt
 
       default = default.call if default.is_a?(Proc)
@@ -34,7 +34,7 @@ module Utils
       response
     end
 
-    def select(text:, options:, default: nil, formatter: nil)
+    def select(text, options, default: nil, formatter: nil)
       Play.promt
 
       options = options.call if options.is_a?(Proc)

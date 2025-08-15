@@ -3,6 +3,10 @@ module Commands
     class SetupGitBranchFromIssueCommand
       include Command
 
+      self.function = "setup-git-branch-issue"
+      self.aliases = ["branch-issue"]
+      self.summary = "Setup development branch from issue tracker for new work"
+
       def call
         options = parse_options
 
@@ -25,7 +29,7 @@ module Commands
         }
 
         OptionParser.new do |opts|
-          opts.banner = "Usage: setup_branch_from_issue [OPTIONS] [ISSUE_KEY]"
+          opts.banner = "Usage: setup_branch_from_issue [OPTIONS] [ISSUE_KEY]\n\n#{self.class.summary}"
           opts.separator ''
           opts.separator 'Arguments:'
           opts.separator '  ISSUE_KEY  Key of the issue (optional, will prompt if not provided)'

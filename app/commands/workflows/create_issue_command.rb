@@ -3,6 +3,10 @@ module Commands
     class CreateIssueCommand
       include Command
 
+      self.function = "create-issue"
+      self.aliases = ["issue"]
+      self.summary = "Create issue via API with automatic sprint assignment"
+
       def call
         options = parse_options
 
@@ -32,7 +36,7 @@ module Commands
         }
 
         OptionParser.new do |opts|
-          opts.banner = "Usage: issue [OPTIONS] \"ISSUE_TITLE\""
+          opts.banner = "Usage: issue [OPTIONS] \"ISSUE_TITLE\"\n\n#{self.class.summary}"
           opts.separator ''
           opts.separator 'Arguments:'
           opts.separator '  ISSUE_TITLE  Title of the issue to create (required)'

@@ -3,6 +3,10 @@ module Commands
     class SetupNoteFromGitBranchCommand
       include Command
 
+      self.function = "setup-note-git-branch"
+      self.aliases = ["note"]
+      self.summary = "Create notes with branch and issue context"
+
       def call
         parse_options
 
@@ -17,7 +21,7 @@ module Commands
 
       def parse_options
         OptionParser.new do |opts|
-          opts.banner = "Usage: setup-note-git-branch"
+          opts.banner = "Usage: setup-note-git-branch\n\n#{self.class.summary}"
           opts.separator ''
 
           opts.on('-h', '--help', 'Show this help') do

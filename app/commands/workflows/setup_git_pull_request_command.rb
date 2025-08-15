@@ -3,6 +3,10 @@ module Commands
     class SetupGitPullRequestCommand
       include Command
 
+      self.function = "setup-git-pull-request"
+      self.aliases = ["pr"]
+      self.summary = "Setup pull request with issue integration"
+
       def call
         parse_options
 
@@ -19,7 +23,7 @@ module Commands
 
       def parse_options
         OptionParser.new do |opts|
-          opts.banner = "Usage: pr"
+          opts.banner = "Usage: pr\n\n#{self.class.summary}"
           opts.separator ''
 
           opts.on('-h', '--help', 'Show this help') do

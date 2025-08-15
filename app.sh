@@ -1,39 +1,5 @@
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-
-# Format : function_name;ruby_class;[alias]
-ruby_commands=(
-  "create-issue;Workflows::CreateIssueCommand;issue"
-  "setup-git-branch;Workflows::SetupGitBranchCommand;branch"
-  "setup-git-branch-issue;Workflows::SetupGitBranchFromIssueCommand;branch-issue"
-  "setup-git-pull-request;Workflows::SetupGitPullRequestCommand;pr"
-  "setup-note-git-branch;Workflows::SetupNoteFromGitBranchCommand;note"
-
-
-  "setup-workflow;SetupWorkflowCommand;flow"
-  "git-bump;CreateGitBumpCommand;bump"
-  "open-browser-aliases;OpenBrowserAliasesCommand;a"
-  "open-file-explorer-aliases;OpenFileExplorerAliasesCommand;o"
-)
-
-for entry in "${ruby_commands[@]}"; do
-  IFS=';' read -r func_name ruby_cmd alias_name <<< "$entry"
-
-  eval "
-    $func_name() {
-      local base_dir=\"\$PWD\"
-      (
-        cd \"\$SCRIPT_DIR\"
-        bundle exec ruby app.rb \"\$base_dir\" \"$ruby_cmd\" \"\$@\"
-      )
-    }
-  "
-
-  if [ -n "$alias_name" ]; then
-    eval "alias $alias_name='$func_name'"
-  fi
-done
-
+source commands.sh
 
 # GIT
 alias amend='git amend'

@@ -1,3 +1,4 @@
+# rubocop:disable Layout/LineLength
 module Utils
   module Open
     extend self
@@ -101,3 +102,4 @@ module Utils
     end
   end
 end
+# rubocop:enable Layout/LineLength

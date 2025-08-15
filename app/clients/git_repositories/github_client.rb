@@ -1,7 +1,7 @@
 module Clients
   module GitRepositories
     class GithubClient < HttpClient
-      BASE_URL = 'https://api.github.com'
+      BASE_URL = 'https://api.github.com'.freeze
 
       def self.build_from_config!
         token = Config.get('github', 'token')

@@ -71,9 +71,11 @@ module Clients
           return cached_types
         end
 
-        project = get(
-          "/rest/api/2/issue/createmeta?projectKeys=#{project_key}&expand=projects.issuetypes"
-        )['projects'].first
+        query = {
+          projectKeys:,
+          expand: "projects.issuetypes"
+        }
+        project = get("/rest/api/2/issue/createmeta", query:)['projects'].first
 
         if project
           Log.info "Issue types found for project '#{project_key}'"
@@ -132,8 +134,7 @@ module Clients
           return cached_result
         end
 
-        encoded_name = URI.encode_www_form_component(name)
-        response = get("/rest/api/3/user/search?query=#{encoded_name}")
+        response = get("/rest/api/3/user/search", query: { query: name })
         user = response.find { |u| u['displayName'].match(/#{Regexp.escape(name)}/i) }
 
         if user
@@ -156,10 +157,11 @@ module Clients
           return cached_users
         end
 
-        jql = "project = #{project_key} AND updated >= -60d"
-        encoded_jql = URI.encode_www_form_component(jql)
-
-        recent_issues = get("/rest/api/2/search?jql=#{encoded_jql}&fields=assignee&maxResults=200")['issues']
+        query = {
+          jql: "project = #{project_key} AND updated >= -60d",
+          fields: 'assignee&maxResults=200"'
+        }
+        recent_issues = get("/rest/api/2/search", query:)['issues']
 
         users = recent_issues
                 .filter_map { |issue| issue.dig('fields', 'assignee') }
@@ -186,10 +188,12 @@ module Clients
           return []
         end
 
-        jql = "assignee = #{user_id} ORDER BY created DESC"
-        encoded_jql = URI.encode_www_form_component(jql)
-
-        response = get("/rest/api/2/search?jql=#{encoded_jql}&maxResults=#{limit}&fields=key,summary,status,created,priority,issuetype")
+        query = {
+          jql: "assignee = #{user_id} ORDER BY created DESC",
+          maxResults: limit,
+          fields: 'key,summary,status,created,priority,issuetype'
+        }
+        response = get("/rest/api/2/search", query:)
         issues = response['issues']
 
         if issues && !issues.empty?

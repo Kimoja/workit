@@ -46,7 +46,7 @@ class HttpClient
       rescue StandardError
         response.message
       end
-      binding.pry
+      # binding.pry
       raise "#{self.class} API error (#{response.code}): #{error_msg}"
     end
 

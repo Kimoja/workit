@@ -120,7 +120,7 @@ module Domain
       end
 
       memo def title
-        Git.commit_message_from_branch(branch)
+        Git.formatted_branch_name(branch)
       end
 
       memo def description

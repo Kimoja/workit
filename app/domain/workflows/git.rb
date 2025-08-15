@@ -200,7 +200,7 @@ module Domain
 
       ### MISC ###
 
-      def commit_message_from_branch(branch)
+      def formatted_branch_name(branch)
         result = branch
 
         if result =~ %r{^([^/]+)/}

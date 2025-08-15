@@ -11,8 +11,8 @@ module Domain
         summary
 
         note_path = find_existing_note || create_note
-
         Open.file_code(note_path)
+
         report(note_path)
       end
 
@@ -26,7 +26,6 @@ module Domain
         else
           Log.pad "No related issue found"
         end
-        Log.log ''
       end
 
       memo def branch
@@ -45,20 +44,23 @@ module Domain
         File.join(Dir.pwd, '.workspace', 'branch_notes')
       end
 
+      def relative_path(path)
+        Pathname.new(path).relative_path_from(Pathname.pwd)
+      end
+
       def find_existing_note
         Log.info "Searching for existing note..."
-        
+
         pattern = File.join(notes_dir, "*-#{normalized_branch}")
 
         Dir.glob(pattern)
            .select { |path| File.directory?(path) }
            .each do |dir|
              index_file = File.join(dir, 'index.md')
-             if File.exist?(index_file)
-               Log.success "✓ Found existing note"
-               Log.pad "Location: #{File.relative_path(index_file)}"
-               return index_file.to_s
-             end
+             next unless File.file?(index_file)
+
+             Log.info "Found existing note"
+             return index_file.to_s
            end
 
         Log.info "No existing note found - creating new one"
@@ -73,38 +75,35 @@ module Domain
         note_dir = File.join(notes_dir, folder_name)
         index_file = File.join(note_dir, 'index.md')
 
-        Log.info "Creating directory: #{note_dir}"
+        Log.info "Creating directory: #{relative_path(note_dir)}"
         FileUtils.mkdir_p(note_dir)
 
-        # Créer le contenu du fichier
         Log.info "Generating note content..."
         content = generate_note_content
 
         File.write(index_file, content)
-        Log.success "✓ Note created successfully"
 
         index_file
       end
 
       def generate_note_content
         Log.info "Including branch and commit information"
-        
+
         content = <<~MARKDOWN
-          # Work Notes - #{branch}
+          # #{Git.formatted_branch_name(branch)}
         MARKDOWN
 
-        # Ajouter les informations de l'issue si trouvée
         if issue
           Log.info "Including issue details: #{issue.key}"
           content += <<~MARKDOWN
             ## Related Issue
 
-            **Issue:** [#{issue.key}](#{issue.url})
-            **Title:** #{issue.title}
-            **Type:** #{issue.issue_type}
+            - Issue: [#{issue.key}](#{issue.url})
+            - Title #{issue.title}
+            - Type #{issue.issue_type}
 
             ### Issue Description
-            #{issue.description || 'No description available'}
+            #{issue.description}
 
           MARKDOWN
         end
@@ -114,8 +113,7 @@ module Domain
 
       def report(note_path)
         Log.success "Branch note ready!"
-        Log.pad "File: #{File.relative_path(note_path)}"
-        Log.pad "Opening in code editor..."
+        Log.pad "File: #{relative_path(note_path)}"
       end
     end
   end

@@ -96,7 +96,7 @@ module Domain
       end
 
       def commit_message
-        Git.commit_message_from_branch(branch)
+        Git.formatted_branch_name(branch)
       end
 
       def report

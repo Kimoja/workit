@@ -3,11 +3,6 @@ module Domain
     class SetupGitPullRequestAction
       include Action
 
-      attr_reader(
-        :git_repo_client,
-        :issue_client
-      )
-
       def call
         summary
         branch_protected!
@@ -23,6 +18,8 @@ module Domain
 
       private
 
+      attr_reader(:git_repo_client, :issue_client)
+
       def summary
         Log.start 'Setup Pull Request'
       end
@@ -36,7 +33,7 @@ module Domain
       def push_branch
         Git.push do
           Prompt.yes_no(
-            text: 'Do you want to push --force-with-lease the branch?',
+            'Do you want to push --force-with-lease the branch?',
             yes: proc do
               Git.push(options: '--force-with-lease') do
                 Prompt.yes_no(
@@ -64,7 +61,7 @@ module Domain
         Log.pad "URL: #{pull_request['html_url']}"
 
         Prompt.yes_no(
-          text: "Continue and create a new Pull Request?",
+          "Continue and create a new Pull Request?",
           yes: proc {
             Log.info "Proceeding to create a new Pull Request..."
             pull_request = nil
@@ -75,7 +72,7 @@ module Domain
             end
 
             Prompt.yes_no(
-              text: "Would you like to reopen the existing PR instead?",
+              "Would you like to reopen the existing PR instead?",
               yes: proc {
                 pull_request = git_repo_client.reopen_pull_request(owner, repo, pull_request['number'])
               },

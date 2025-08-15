@@ -3,16 +3,14 @@ module Domain
     class SetupGitBranchAction
       include Action
 
-      attr_reader(:branch, :base_branch)
-
       def call
         setup_and_valid_branch!
         summary
 
-        return if branch_is_current_branch?
+        return branch if branch_is_current_branch?
 
         stash_uncommited_changes
-        return if checkout_to_existing_branch?
+        return branch if checkout_to_existing_branch?
 
         setup_and_valid_base_branch!
 
@@ -21,15 +19,16 @@ module Domain
         Git.commit(commit_message, options: '--allow-empty')
 
         report
+
+        branch
       end
+
+      attr_reader(:branch, :base_branch)
 
       private
 
       def setup_and_valid_branch!
-        valid_attribute_or_ask(
-          attribute: :branch,
-          text: 'Branch name is required'
-        ) { branch&.strip&.present? }
+        valid_attribute_or_ask(:branch, 'Branch name is required') { branch&.strip&.present? }
       end
 
       def summary
@@ -65,9 +64,9 @@ module Domain
 
       def setup_and_valid_base_branch!
         valid_attribute_or_select(
-          attribute: :base_branch,
-          text: 'Select base branch for the new branch:',
-          options: proc { Git.recent_branches },
+          :base_branch,
+          'Select base branch for the new branch:',
+          proc { Git.recent_branches },
           default: proc { Git.main_branch }
         ) { base_branch&.strip&.present? }
       end
@@ -88,7 +87,7 @@ module Domain
 
         Git.pull do
           Prompt.yes_no(
-            text:,
+            text,
             yes: proc { Git.changes? ? Git.abort_rebase : true },
             no: proc { false }
           )

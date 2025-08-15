@@ -3,8 +3,6 @@ module Domain
     class SetupGitBranchFromIssueAction
       include Action
 
-      attr_reader(:issue_key, :issue_client, :issue)
-
       def call
         setup_and_valid_attributes!
         summary
@@ -17,11 +15,13 @@ module Domain
 
       private
 
+      attr_reader(:issue_client, :issue)
+
       def setup_and_valid_attributes!
         valid_attribute_or_select(
-          attribute: :issue_key,
-          text: 'Issue key is required',
-          options: proc { possible_issue_keys },
+          :issue_key,
+          'Issue key is required',
+          proc { possible_issue_keys },
           formatter: proc { |value| value.split(' > ').first }
         ) { issue_key&.strip&.present? }
       end
@@ -36,7 +36,13 @@ module Domain
         Log.start("Setup Git branch from issue: #{issue_key}")
       end
 
+      def issue_key
+        @issue_key || issue&.key
+      end
+
       def find_issue
+        return issue if defined?(@issue) && @issue
+
         @issue = issue_client.fetch_issue(issue_key) || raise("Issue with key '#{issue_key}' not found")
       end
 

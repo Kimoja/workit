@@ -27,7 +27,7 @@ module Commands
         }
 
         OptionParser.new do |opts|
-          opts.banner = "Usage: setup_branch [OPTIONS] BRANCH_NAME\n\n#{self.class.summary}"
+          opts.banner = "Usage: #{self.class.summary} [OPTIONS] BRANCH_NAME\n\n#{self.class.summary}"
           opts.separator ''
           opts.separator 'Arguments:'
           opts.separator '  BRANCH_NAME  Name of the branch to create/switch to (required)'
@@ -52,9 +52,9 @@ module Commands
         Log.log opts
         Log.log ''
         Log.log 'Examples:'
-        Log.log '  setup_branch feature/new-ui'
-        Log.log '  setup_branch -b develop feature/user-auth'
-        Log.log '  setup_branch -b main bugfix/login-error'
+        Log.log "  #{self.class.summary} feature/new-ui"
+        Log.log "  #{self.class.summary} -b develop feature/user-auth"
+        Log.log "  #{self.class.summary} -b main bugfix/login-error"
         Log.log ''
         Log.log 'Behavior:'
         Log.log '  • If branch exists locally: switch to it'

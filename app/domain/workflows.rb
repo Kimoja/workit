@@ -37,6 +37,17 @@ module Domain
       issue_client.fetch_issue(issue_key)
     end
 
+
+    def ask_for_issue(branch, issue_client)
+      match = branch.match(/([A-Za-z]+)-(\d+)/)
+
+      return nil unless match
+
+      issue_key = "#{match[1]}-#{match[2]}"
+
+      issue_client.fetch_issue(issue_key)
+    end
+
     #--
 
     def setup_workflow(...)

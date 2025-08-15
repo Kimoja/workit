@@ -97,7 +97,7 @@ module Domain
         Log.info "Branch '#{branch_name}' already exists"
 
         Prompt.yes_no(
-          text: 'Do you want to use the existing branch?',
+          'Do you want to use the existing branch?',
           yes: proc {
             if branch_name == Git.current_branch
               Log.info "Already on branch '#{branch_name}'"
@@ -119,7 +119,7 @@ module Domain
         return if main_branch == current_branch
 
         Prompt.yes_no(
-          text: "Do you want to use '#{main_branch}' as base branch or use the current branch '#{current_branch}'? (y for #{main_branch}, n for current)",
+          "Do you want to use '#{main_branch}' as base branch or use the current branch '#{current_branch}'? (y for #{main_branch}, n for current)",
           yes: proc {
             if current_branch == main_branch
               Log.info "Already on #{main_branch}"

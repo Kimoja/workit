@@ -71,11 +71,11 @@ module Commands
         Log.log opts
         Log.log ''
         Log.log 'Examples:'
-        Log.log '  issue "Fix login bug"'
-        Log.log '  issue -p KRAFT "Implement new feature"'
-        Log.log '  issue -t Bug "Fix image display"'
-        Log.log '  issue -u john.doe "Review code changes"'
-        Log.log '  issue -p KRAFT -t Story -u jane.smith "Add new dashboard"'
+        Log.log "  #{self.class.summary} \"Fix login bug\""
+        Log.log "  #{self.class.summary} -p KRAFT \"Implement new feature\""
+        Log.log "  #{self.class.summary} -t Bug \"Fix image display\""
+        Log.log "  #{self.class.summary} -u john.doe \"Review code changes\""
+        Log.log "  #{self.class.summary} -p KRAFT -t Story -u jane.smith \"Add new dashboard\""
         Log.log ''
         Log.log 'Behavior:'
         Log.log '  • Creates issue in specified or default project'

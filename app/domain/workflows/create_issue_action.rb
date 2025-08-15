@@ -4,45 +4,41 @@ module Domain
       include Action
       include Domain
 
-      attr_reader :title, :project_key, :issue_type, :user_name, :issue_client
-
       def call
         setup_and_valid_attributes!
         summary
-        issue = create_issue
-        add_to_cache(issue)
+        create_issue
         Open.browser(issue.url)
-        report(issue)
+        report
 
-        issue.url
+        issue
       end
 
       private
 
+      attr_reader :title, :project_key, :issue_type, :user_name, :issue_client, :issue
+
       def setup_and_valid_attributes!
-        valid_attribute_or_ask(
-          attribute: :title,
-          text: 'Issue title is required'
-        ) { title&.strip&.present? }
+        valid_attribute_or_ask(:title, 'Issue title is required') { title&.strip&.present? }
 
         valid_attribute_or_select(
-          attribute: :project_key,
-          text: 'Project key is required',
-          options: proc { issue_client.fetch_projects.keys.sort },
+          :project_key,
+          'Project key is required',
+          proc { issue_client.fetch_projects.keys.sort },
           default: Config.get("@issue_provider", "default_project_key")
         ) { project_key&.strip&.present? }
 
         valid_attribute_or_select(
-          attribute: :issue_type,
-          text: 'Issue type is required',
-          options: issue_types,
+          :issue_type,
+          'Issue type is required',
+          issue_types,
           default: Config.get("@issue_provider", "default_issue_type")
         ) { issue_type&.strip&.present? }
 
         valid_attribute_or_select(
-          attribute: :user_name,
-          text: 'User name is required',
-          options: proc { issue_client.fetch_project_user_names(project_key) },
+          :user_name,
+          'User name is required',
+          proc { issue_client.fetch_project_user_names(project_key) },
           default: Config.get("@issue_provider", "default_user_name")
         ) { user_name&.strip&.present? }
       end
@@ -56,7 +52,7 @@ module Domain
       end
 
       def create_issue
-        issue_client.create_issue(
+        @issue = issue_client.create_issue(
           project_key:,
           title:,
           issue_type: validate_issue_type,
@@ -99,7 +95,7 @@ module Domain
         )
       end
 
-      def report(issue)
+      def report
         Log.success "Issue created successfully: #{issue.key}"
         Log.pad "URL: #{issue.url}"
 

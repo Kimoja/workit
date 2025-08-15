@@ -29,7 +29,7 @@ module Commands
         }
 
         OptionParser.new do |opts|
-          opts.banner = "Usage: setup_branch_from_issue [OPTIONS] [ISSUE_KEY]\n\n#{self.class.summary}"
+          opts.banner = "Usage: #{self.class.summary} [OPTIONS] [ISSUE_KEY]\n\n#{self.class.summary}"
           opts.separator ''
           opts.separator 'Arguments:'
           opts.separator '  ISSUE_KEY  Key of the issue (optional, will prompt if not provided)'
@@ -55,9 +55,9 @@ module Commands
         Log.log opts
         Log.log ''
         Log.log 'Examples:'
-        Log.log '  setup_branch_from_issue PROJ-123'
-        Log.log '  setup_branch_from_issue -b develop PROJ-456'
-        Log.log '  setup_branch_from_issue  # Will prompt for issue selection'
+        Log.log "  #{self.class.summary} PROJ-123"
+        Log.log "  #{self.class.summary} -b develop PROJ-456"
+        Log.log "  #{self.class.summary}  # Will prompt for issue selection"
         Log.log ''
         Log.log 'Behavior:'
         Log.log '  • Fetches issue details from your issue tracker'

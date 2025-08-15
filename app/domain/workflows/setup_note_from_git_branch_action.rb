@@ -14,6 +14,8 @@ module Domain
         Open.file_code(note_path)
 
         report(note_path)
+
+        note_path
       end
 
       private

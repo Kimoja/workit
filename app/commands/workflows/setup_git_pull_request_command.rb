@@ -23,7 +23,7 @@ module Commands
 
       def parse_options
         OptionParser.new do |opts|
-          opts.banner = "Usage: pr\n\n#{self.class.summary}"
+          opts.banner = "Usage: #{self.class.summary}\n\n#{self.class.summary}"
           opts.separator ''
 
           opts.on('-h', '--help', 'Show this help') do
@@ -39,7 +39,7 @@ module Commands
         Log.log opts
         Log.log ''
         Log.log 'Examples:'
-        Log.log '  setup_pull_request'
+        Log.log "  #{self.class.summary}"
         Log.log ''
         Log.log 'Behavior:'
         Log.log '  • Creates or updates a pull request from current/specified branch'

@@ -18,7 +18,7 @@ module Action
   def valid_attribute_or_ask(attribute, text, default: nil, formatter: nil, &validator)
     return if validator.call
 
-    ask_for_attribute(attribute:, text:, default:, formatter:) do
+    ask_for_attribute(attribute, text, default:, formatter:) do
       raise text unless validator.call
     end
   end

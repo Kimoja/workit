@@ -9,6 +9,8 @@ AllCops:
     - 'vendor/**/*'
     - 'tmp/**/*'
     - 'node_modules/**/*'
+    - '.workspace/**/*'
+    - 'bundle/**/*'
 
 # Lint
 Lint/UselessMethodDefinition:

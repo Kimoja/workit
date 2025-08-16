@@ -27,7 +27,7 @@ module Utils
     end
 
     def error(message)
-      Play.error
+      System.play_error
       Log.log("\e[31m✗ Erreur: #{message}\e[0m")
     end
 

@@ -8,7 +8,7 @@ module Utils
 
     # rubocop:disable Naming/MethodParameterName
     def yes_no(text, yes: nil, no: nil)
-      Play.promt
+      System.play_promt
 
       if prompt.yes?("\e[31m?\e[0m #{text}")
         yes ? yes.call : true
@@ -19,7 +19,7 @@ module Utils
     # rubocop:enable Naming/MethodParameterName
 
     def ask(text, default: nil, formatter: nil)
-      Play.promt
+      System.play_promt
 
       default = default.call if default.is_a?(Proc)
 
@@ -35,7 +35,7 @@ module Utils
     end
 
     def select(text, options, default: nil, formatter: nil)
-      Play.promt
+      System.play_promt
 
       options = options.call if options.is_a?(Proc)
       default = default.call if default.is_a?(Proc)

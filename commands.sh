@@ -10,6 +10,14 @@ open-browser-aliases() {
   )
 }
 
+setup-note-git-branch() {
+  local base_dir="$PWD"
+  (
+    cd "$SCRIPT_DIR"
+    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupNoteFromGitBranchCommand" "$@"
+  )
+}
+
 setup-workflow() {
   local base_dir="$PWD"
   (
@@ -50,22 +58,14 @@ setup-git-pull-request() {
   )
 }
 
-setup-note-git-branch() {
-  local base_dir="$PWD"
-  (
-    cd "$SCRIPT_DIR"
-    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupNoteFromGitBranchCommand" "$@"
-  )
-}
-
 
 alias bro='open-browser-aliases'
+alias note='setup-note-git-branch'
 alias flow='setup-workflow'
 alias issue='create-issue'
 alias branch='setup-git-branch'
 alias branch-issue='setup-git-branch-issue'
 alias pr='setup-git-pull-request'
-alias note='setup-note-git-branch'
 
 workit-help() {
   echo "Available commands:"
@@ -76,6 +76,9 @@ workit-help() {
   echo ""
   echo ""
   echo "Workflows Commands:"
+  echo "    setup-note-git-branch (note)"
+  echo "      Create notes with branch and issue context"
+  echo ""
   echo "    setup-workflow (flow)"
   echo "      Interactive development workflow (issue → branch → notes → PR)"
   echo ""
@@ -90,9 +93,6 @@ workit-help() {
   echo ""
   echo "    setup-git-pull-request (pr)"
   echo "      Setup pull request with issue integration"
-  echo ""
-  echo "    setup-note-git-branch (note)"
-  echo "      Create notes with branch and issue context"
   echo ""
   echo ""
   echo ""

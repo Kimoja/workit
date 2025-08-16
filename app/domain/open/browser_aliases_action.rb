@@ -72,7 +72,7 @@ module Domain
 
         urls.each do |url|
           Log.info "Opening: #{url}"
-          Utils::Open.browser(url)
+          System.open_browser(url)
         end
       end
 

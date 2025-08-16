@@ -1,9 +1,9 @@
 # rubocop:disable Layout/LineLength
 module Utils
-  module Open
+  module System
     extend self
 
-    def browser(url)
+    def open_browser(url)
       Log.info "Opening #{url} in browser..."
 
       case RUBY_PLATFORM
@@ -20,7 +20,7 @@ module Utils
       Log.error "Failed to open browser: #{e.message}"
     end
 
-    def file_explorer(path)
+    def open_file_explorer(path)
       Log.info "Opening #{path} in file explorer..."
 
       # Vérifier que le chemin existe
@@ -49,7 +49,7 @@ module Utils
       Log.error "Failed to open file explorer: #{e.message}"
     end
 
-    def file_code(path)
+    def open_file_code(path)
       Log.info "Opening #{path} in VS Code..."
 
       unless File.exist?(path)
@@ -99,6 +99,48 @@ module Utils
       end
     rescue StandardError => e
       Log.error "Failed to open VS Code: #{e.message}"
+    end
+
+    def play_promt
+      case RUBY_PLATFORM
+      when /darwin/ # macOS
+        system('afplay /System/Library/Sounds/Glass.aiff > /dev/null 2>&1 &')
+      when /linux/
+        # Try different Linux sound commands
+        system('paplay /usr/share/sounds/alsa/Front_Left.wav > /dev/null 2>&1 &') ||
+          system('aplay /usr/share/sounds/alsa/Front_Left.wav > /dev/null 2>&1 &') ||
+          system('speaker-test -t sine -f 1000 -l 1 > /dev/null 2>&1 &') ||
+          system("echo -e '\\a'") # Fallback to terminal bell
+      when /mswin|mingw|cygwin/ # Windows
+        system("powershell -c '[console]::beep(800,200)' > nul 2>&1 &")
+      else
+        # Fallback: terminal bell character
+        print "\a"
+      end
+    rescue StandardError
+      # Silent fallback if sound fails
+      print "\a"
+    end
+
+    def play_error
+      case RUBY_PLATFORM
+      when /darwin/ # macOS
+        system('afplay /System/Library/Sounds/Basso.aiff > /dev/null 2>&1 &')
+      when /linux/
+        # Try different Linux sound commands with error-like frequency
+        system('speaker-test -t sine -f 400 -l 1 > /dev/null 2>&1 &') ||
+          system('paplay /usr/share/sounds/alsa/Front_Left.wav > /dev/null 2>&1 &') ||
+          system('aplay /usr/share/sounds/alsa/Front_Left.wav > /dev/null 2>&1 &') ||
+          system("echo -e '\\a'") # Fallback to terminal bell
+      when /mswin|mingw|cygwin/ # Windows
+        system("powershell -c '[console]::beep(400,300)' > nul 2>&1 &")
+      else
+        # Fallback: terminal bell character
+        print "\a"
+      end
+    rescue StandardError
+      # Silent fallback if sound fails
+      print "\a"
     end
   end
 end

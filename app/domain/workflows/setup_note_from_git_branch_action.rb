@@ -11,7 +11,7 @@ module Domain
         summary
 
         note_path = find_existing_note || create_note
-        Open.file_code(note_path)
+        System.open_browser(note_path)
 
         report(note_path)
 

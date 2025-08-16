@@ -10,7 +10,7 @@ module Domain
 
         pull_request = existing_pull_request || create_pull_request
         url = pull_request['html_url']
-        Utils::Open.browser(url)
+        System.open_browser(url)
         report(pull_request)
 
         url

@@ -1,8 +1,8 @@
-module Domain
+module Operations
   module Workflows
     class CreateIssueAction
       include Action
-      include Domain
+      include Operations
 
       def call
         setup_and_valid_attributes!

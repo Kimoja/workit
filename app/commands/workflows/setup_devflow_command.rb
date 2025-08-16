@@ -13,7 +13,7 @@ module Commands
         issue_client = Clients::Issues.build_from_config!
         git_repo_client = Clients::GitRepositories.build_from_config!
 
-        Domain::Workflows.setup_devflow(
+        Operations::Workflows.setup_devflow(
           issue_client:,
           git_repo_client:
         )

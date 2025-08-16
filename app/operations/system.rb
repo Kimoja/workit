@@ -1,7 +1,7 @@
-module Domain
+module Operations
   module System
     extend self
-    include Domain
+    include Operations
 
     ### ACTIONS ###
 

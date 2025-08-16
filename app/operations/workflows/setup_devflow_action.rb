@@ -1,4 +1,4 @@
-module Domain
+module Operations
   module Workflows
     class SetupDevflowAction
       include Action
@@ -58,22 +58,22 @@ module Domain
       end
 
       def create_new_issue
-        Domain::Workflows.create_issue(issue_client:)
+        Operations::Workflows.create_issue(issue_client:)
       end
 
       def setup_branch_issue(issue: nil)
-        Domain::Workflows.setup_git_branch_from_issue(issue:, issue_client:)
+        Operations::Workflows.setup_git_branch_from_issue(issue:, issue_client:)
       end
 
       def setup_branch
-        Domain::Workflows.setup_git_branch
+        Operations::Workflows.setup_git_branch
       end
 
       def setup_work_notes
         Prompt.confirm(
           "Create work notes for this development?",
           yes: proc {
-            Domain::Workflows.setup_note_from_git_branch(
+            Operations::Workflows.setup_note_from_git_branch(
               issue_client: issue_client
             )
           },
@@ -87,7 +87,7 @@ module Domain
         Prompt.confirm(
           "Create pull request now?",
           yes: proc {
-            Domain::Workflows.setup_git_pull_request(
+            Operations::Workflows.setup_git_pull_request(
               git_repo_client: git_repo_client,
               issue_client: issue_client
             )

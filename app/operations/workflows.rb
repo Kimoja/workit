@@ -1,7 +1,7 @@
-module Domain
+module Operations
   module Workflows
     extend self
-    include Domain
+    include Operations
 
     ### ACTIONS ###
 

@@ -13,7 +13,7 @@ module Commands
         branch = ARGV[0]
         base_branch = options[:base_branch]
 
-        Domain::Workflows.setup_git_branch(
+        Operations::Workflows.setup_git_branch(
           branch:,
           base_branch:
         )

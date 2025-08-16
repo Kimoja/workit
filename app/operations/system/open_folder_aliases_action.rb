@@ -1,4 +1,4 @@
-module Domain
+module Operations
   module System
     class OpenFolderAliasesAction
       include Action

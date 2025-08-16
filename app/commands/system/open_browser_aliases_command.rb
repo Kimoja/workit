@@ -10,7 +10,7 @@ module Commands
       def call
         parse_options
 
-        Domain::System.open_browser_aliases(ARGV)
+        Operations::System.open_browser_aliases(ARGV)
       end
 
       private

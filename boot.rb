@@ -1,8 +1,5 @@
 s = Time.now
-require 'bundler/setup'
-  pp "#{Time.now - s} seconds to bundler/setup"
-
-Bundler.require
+require_relative 'bundle/bundler/setup'
   pp "#{Time.now - s} seconds to bundler/require"
 
 require 'optparse'
@@ -13,8 +10,7 @@ require 'uri'
 require 'date'
 require 'ostruct'
 require 'pathname'
-  pp "#{Time.now - s} seconds to less support"
-require 'active_support/all'
+require 'zeitwerk'
 
   pp "#{Time.now - s} seconds to manual"
 

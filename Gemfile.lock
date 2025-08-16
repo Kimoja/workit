@@ -1,35 +1,15 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (8.0.2)
-      base64
-      benchmark (>= 0.3)
-      bigdecimal
-      concurrent-ruby (~> 1.0, >= 1.3.1)
-      connection_pool (>= 2.2.5)
-      drb
-      i18n (>= 1.6, < 2)
-      logger (>= 1.4.2)
-      minitest (>= 5.1)
-      securerandom (>= 0.3)
-      tzinfo (~> 2.0, >= 2.0.5)
-      uri (>= 0.13.1)
     ast (2.4.3)
-    base64 (0.3.0)
-    benchmark (0.4.1)
-    bigdecimal (3.2.2)
+    bootsnap (1.18.6)
+      msgpack (~> 1.2)
     coderay (1.1.3)
-    concurrent-ruby (1.3.5)
-    connection_pool (2.5.3)
-    drb (2.2.3)
-    i18n (1.14.7)
-      concurrent-ruby (~> 1.0)
     json (2.13.2)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
-    logger (1.7.0)
     method_source (1.1.0)
-    minitest (5.25.5)
+    msgpack (1.8.0)
     parallel (1.27.0)
     parser (3.3.9.0)
       ast (~> 2.4.1)
@@ -58,7 +38,6 @@ GEM
       parser (>= 3.3.7.2)
       prism (~> 1.4)
     ruby-progressbar (1.13.0)
-    securerandom (0.4.1)
     tty-color (0.6.0)
     tty-cursor (0.7.1)
     tty-prompt (0.23.1)
@@ -69,13 +48,10 @@ GEM
       tty-screen (~> 0.8)
       wisper (~> 2.0)
     tty-screen (0.8.2)
-    tzinfo (2.0.6)
-      concurrent-ruby (~> 1.0)
     uinit-memoizable (0.1.0)
     unicode-display_width (3.1.4)
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
-    uri (1.0.3)
     wisper (2.0.1)
     zeitwerk (2.7.3)
 
@@ -83,7 +59,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activesupport (~> 8.0)
+  bootsnap
   pry
   rubocop (~> 1.79)
   tty-prompt (~> 0.23.1)

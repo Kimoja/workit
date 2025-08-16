@@ -1,9 +1,21 @@
-s = Time.now
-require 'bundler/setup'
-  pp "#{Time.now - s} seconds to bundler/setup"
+### BOOTSNAP ###
 
-Bundler.require
-  pp "#{Time.now - s} seconds to bundler/require"
+require 'bootsnap'
+
+cache_dir = File.expand_path('tmp/cache', __dir__)
+FileUtils.mkdir_p(cache_dir)
+
+Bootsnap.setup(
+  cache_dir: cache_dir,
+  development_mode: true,
+  load_path_cache: true,
+  compile_cache_iseq: true,
+  compile_cache_yaml: true
+)
+
+### BUNDLER & MISC ###
+
+require_relative 'bundle/bundler/setup'
 
 require 'optparse'
 require 'net/http'
@@ -13,13 +25,16 @@ require 'uri'
 require 'date'
 require 'ostruct'
 require 'pathname'
-  pp "#{Time.now - s} seconds to less support"
-require 'active_support/all'
+require 'zeitwerk'
+require 'uinit/memoizable'
+require 'pry'
+require 'tty-prompt'
 
-  pp "#{Time.now - s} seconds to manual"
+require_relative 'app/utils/core_extensions'
+
+### ZEITWERK ###
 
 loader = Zeitwerk::Loader.new
 loader.push_dir('app')
 loader.collapse('app/base')
 loader.setup
-  pp "#{Time.now - s} seconds to Zeitwerk"

@@ -52,7 +52,7 @@ module Utils
       end
 
       return false unless expire_time
-      return false if Time.current.to_i < expire_time
+      return false if Time.now.to_i < expire_time
 
       parent.delete(expire_key)
       parent.delete(last_key)

@@ -1,6 +1,6 @@
 module Commands
-  module Open
-    class FolderAliasesCommand
+  module System
+    class OpenFolderAliasesCommand
       include Command
 
       self.function = "open-folder-aliases"
@@ -10,7 +10,7 @@ module Commands
       def call
         parse_options
 
-        Domain::Open.folder_aliases(ARGV)
+        Domain::System.open_folder_aliases(ARGV)
       end
 
       private

@@ -2,27 +2,19 @@
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-open-folder-aliases() {
-  local base_dir="$PWD"
-  (
-    cd "$SCRIPT_DIR"
-    bundle exec ruby app.rb "$base_dir" "Commands::Open::FolderAliasesCommand" "$@"
-  )
-}
-
 open-browser-aliases() {
   local base_dir="$PWD"
   (
     cd "$SCRIPT_DIR"
-    bundle exec ruby app.rb "$base_dir" "Commands::Open::BrowserAliasesCommand" "$@"
+    bundle exec ruby app.rb "$base_dir" "Commands::System::OpenBrowserAliasesCommand" "$@"
   )
 }
 
-setup-git-branch() {
+open-folder-aliases() {
   local base_dir="$PWD"
   (
     cd "$SCRIPT_DIR"
-    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupGitBranchCommand" "$@"
+    bundle exec ruby app.rb "$base_dir" "Commands::System::OpenFolderAliasesCommand" "$@"
   )
 }
 
@@ -66,31 +58,36 @@ setup-devflow() {
   )
 }
 
+setup-git-branch() {
+  local base_dir="$PWD"
+  (
+    cd "$SCRIPT_DIR"
+    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupGitBranchCommand" "$@"
+  )
+}
 
-alias f='open-folder-aliases'
+
 alias b='open-browser-aliases'
-alias branch='setup-git-branch'
+alias f='open-folder-aliases'
 alias branch-issue='setup-git-branch-issue'
 alias pr='setup-git-pull-request'
 alias note='setup-note-git-branch'
 alias issue='create-issue'
 alias devflow='setup-devflow'
+alias branch='setup-git-branch'
 
 workit-help() {
   echo "Available commands:"
   echo ""
-  echo "Open Commands:"
-  echo "    open-folder-aliases (f)"
-  echo "      Open folders from configured aliases"
-  echo ""
+  echo "System Commands:"
   echo "    open-browser-aliases (b)"
   echo "      Open browser URLs from configured aliases"
   echo ""
+  echo "    open-folder-aliases (f)"
+  echo "      Open folders from configured aliases"
+  echo ""
   echo ""
   echo "Workflows Commands:"
-  echo "    setup-git-branch (branch)"
-  echo "      Setup development branch for new work"
-  echo ""
   echo "    setup-git-branch-issue (branch-issue)"
   echo "      Setup development branch from issue tracker for new work"
   echo ""
@@ -105,6 +102,9 @@ workit-help() {
   echo ""
   echo "    setup-devflow (devflow)"
   echo "      Interactive development workflow (issue → branch → notes → PR)"
+  echo ""
+  echo "    setup-git-branch (branch)"
+  echo "      Setup development branch for new work"
   echo ""
   echo ""
   echo ""

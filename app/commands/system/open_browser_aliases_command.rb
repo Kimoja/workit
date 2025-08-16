@@ -1,6 +1,6 @@
 module Commands
-  module Open
-    class BrowserAliasesCommand
+  module System
+    class OpenBrowserAliasesCommand
       include Command
 
       self.function = "open-browser-aliases"
@@ -10,7 +10,7 @@ module Commands
       def call
         parse_options
 
-        Domain::Open.browser_aliases(ARGV)
+        Domain::System.open_browser_aliases(ARGV)
       end
 
       private

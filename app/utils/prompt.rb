@@ -7,7 +7,7 @@ module Utils
     end
 
     # rubocop:disable Naming/MethodParameterName
-    def yes_no(text, yes: nil, no: nil)
+    def confirm(text, yes: nil, no: nil)
       System.play_promt
 
       if prompt.yes?("\e[31m?\e[0m #{text}")

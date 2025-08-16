@@ -1,6 +1,6 @@
 module Domain
-  module Open
-    class FolderAliasesAction
+  module System
+    class OpenFolderAliasesAction
       include Action
 
       attr_reader :alias_names

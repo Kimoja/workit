@@ -70,7 +70,7 @@ module Domain
       end
 
       def setup_work_notes
-        Prompt.yes_no(
+        Prompt.confirm(
           "Create work notes for this development?",
           yes: proc {
             Domain::Workflows.setup_note_from_git_branch(
@@ -84,7 +84,7 @@ module Domain
       end
 
       def setup_pull_request_if_wanted
-        Prompt.yes_no(
+        Prompt.confirm(
           "Create pull request now?",
           yes: proc {
             Domain::Workflows.setup_git_pull_request(

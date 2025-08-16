@@ -8,7 +8,7 @@ module Domain
         setup_and_valid_attributes!
         summary
         create_issue
-        System.open_browser(issue.url)
+        Utils::System.open_browser(issue.url)
         report
 
         issue

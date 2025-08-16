@@ -10,7 +10,7 @@ module Domain
 
         pull_request = existing_pull_request || create_pull_request
         url = pull_request['html_url']
-        System.open_browser(url)
+        Utils::System.open_browser(url)
         report(pull_request)
 
         url
@@ -32,11 +32,11 @@ module Domain
 
       def push_branch
         Git.push do
-          Prompt.yes_no(
+          Prompt.confirm(
             'Do you want to push --force-with-lease the branch?',
             yes: proc do
               Git.push(options: '--force-with-lease') do
-                Prompt.yes_no(
+                Prompt.confirm(
                   text: 'Do you want to push --force the branch?',
                   yes: proc { Git.push(options: '--force') },
                   no: proc { true }
@@ -60,7 +60,7 @@ module Domain
         Log.pad "Title: #{pull_request['title']}"
         Log.pad "URL: #{pull_request['html_url']}"
 
-        Prompt.yes_no(
+        Prompt.confirm(
           "Continue and create a new Pull Request?",
           yes: proc {
             Log.info "Proceeding to create a new Pull Request..."
@@ -71,7 +71,7 @@ module Domain
               raise "Operation cancelled - no new Pull Request will be created"
             end
 
-            Prompt.yes_no(
+            Prompt.confirm(
               "Would you like to reopen the existing PR instead?",
               yes: proc {
                 pull_request = git_repo_client.reopen_pull_request(owner, repo, pull_request['number'])

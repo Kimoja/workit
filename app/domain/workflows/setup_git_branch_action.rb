@@ -86,7 +86,7 @@ module Domain
         return unless Git.remote_branch_exists?(Git.current_branch)
 
         Git.pull do
-          Prompt.yes_no(
+          Prompt.confirm(
             text,
             yes: proc { Git.changes? ? Git.abort_rebase : true },
             no: proc { false }

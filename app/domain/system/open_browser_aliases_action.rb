@@ -1,6 +1,6 @@
 module Domain
-  module Open
-    class BrowserAliasesAction
+  module System
+    class OpenBrowserAliasesAction
       include Action
 
       attr_reader :alias_names
@@ -72,7 +72,7 @@ module Domain
 
         urls.each do |url|
           Log.info "Opening: #{url}"
-          System.open_browser(url)
+          Utils::System.open_browser(url)
         end
       end
 

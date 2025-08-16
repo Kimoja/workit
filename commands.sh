@@ -2,35 +2,19 @@
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
+open-folder-aliases() {
+  local base_dir="$PWD"
+  (
+    cd "$SCRIPT_DIR"
+    bundle exec ruby app.rb "$base_dir" "Commands::Open::FolderAliasesCommand" "$@"
+  )
+}
+
 open-browser-aliases() {
   local base_dir="$PWD"
   (
     cd "$SCRIPT_DIR"
     bundle exec ruby app.rb "$base_dir" "Commands::Open::BrowserAliasesCommand" "$@"
-  )
-}
-
-setup-note-git-branch() {
-  local base_dir="$PWD"
-  (
-    cd "$SCRIPT_DIR"
-    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupNoteFromGitBranchCommand" "$@"
-  )
-}
-
-setup-workflow() {
-  local base_dir="$PWD"
-  (
-    cd "$SCRIPT_DIR"
-    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupWorkflowCommand" "$@"
-  )
-}
-
-create-issue() {
-  local base_dir="$PWD"
-  (
-    cd "$SCRIPT_DIR"
-    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::CreateIssueCommand" "$@"
   )
 }
 
@@ -58,33 +42,52 @@ setup-git-pull-request() {
   )
 }
 
+setup-note-git-branch() {
+  local base_dir="$PWD"
+  (
+    cd "$SCRIPT_DIR"
+    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupNoteFromGitBranchCommand" "$@"
+  )
+}
 
-alias bro='open-browser-aliases'
-alias note='setup-note-git-branch'
-alias flow='setup-workflow'
-alias issue='create-issue'
+create-issue() {
+  local base_dir="$PWD"
+  (
+    cd "$SCRIPT_DIR"
+    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::CreateIssueCommand" "$@"
+  )
+}
+
+setup-devflow() {
+  local base_dir="$PWD"
+  (
+    cd "$SCRIPT_DIR"
+    bundle exec ruby app.rb "$base_dir" "Commands::Workflows::SetupDevflowCommand" "$@"
+  )
+}
+
+
+alias f='open-folder-aliases'
+alias b='open-browser-aliases'
 alias branch='setup-git-branch'
 alias branch-issue='setup-git-branch-issue'
 alias pr='setup-git-pull-request'
+alias note='setup-note-git-branch'
+alias issue='create-issue'
+alias devflow='setup-devflow'
 
 workit-help() {
   echo "Available commands:"
   echo ""
   echo "Open Commands:"
-  echo "    open-browser-aliases (bro)"
+  echo "    open-folder-aliases (f)"
+  echo "      Open folders from configured aliases"
+  echo ""
+  echo "    open-browser-aliases (b)"
   echo "      Open browser URLs from configured aliases"
   echo ""
   echo ""
   echo "Workflows Commands:"
-  echo "    setup-note-git-branch (note)"
-  echo "      Create notes with branch and issue context"
-  echo ""
-  echo "    setup-workflow (flow)"
-  echo "      Interactive development workflow (issue → branch → notes → PR)"
-  echo ""
-  echo "    create-issue (issue)"
-  echo "      Create issue via API with automatic sprint assignment"
-  echo ""
   echo "    setup-git-branch (branch)"
   echo "      Setup development branch for new work"
   echo ""
@@ -93,6 +96,15 @@ workit-help() {
   echo ""
   echo "    setup-git-pull-request (pr)"
   echo "      Setup pull request with issue integration"
+  echo ""
+  echo "    setup-note-git-branch (note)"
+  echo "      Create notes with branch and issue context"
+  echo ""
+  echo "    create-issue (issue)"
+  echo "      Create issue via API with automatic sprint assignment"
+  echo ""
+  echo "    setup-devflow (devflow)"
+  echo "      Interactive development workflow (issue → branch → notes → PR)"
   echo ""
   echo ""
   echo ""

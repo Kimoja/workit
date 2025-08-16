@@ -13,7 +13,7 @@ module Commands
         issue_client = Clients::Issues.build_from_config!
 
         Domain::Workflows.setup_note_from_git_branch(
-          issue_client: issue_client
+          issue_client:
         )
       end
 

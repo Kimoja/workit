@@ -20,7 +20,7 @@ module Utils
       Log.error "Failed to open browser: #{e.message}"
     end
 
-    def open_file_explorer(path)
+    def open_folder(path)
       Log.info "Opening #{path} in file explorer..."
 
       # Vérifier que le chemin existe

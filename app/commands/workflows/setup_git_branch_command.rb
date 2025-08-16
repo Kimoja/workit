@@ -14,8 +14,8 @@ module Commands
         base_branch = options[:base_branch]
 
         Domain::Workflows.setup_git_branch(
-          branch: branch,
-          base_branch: base_branch
+          branch:,
+          base_branch:
         )
       end
 

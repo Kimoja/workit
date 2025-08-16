@@ -15,9 +15,9 @@ module Commands
         issue_client = Clients::Issues.build_from_config!
 
         Domain::Workflows.setup_git_branch_from_issue(
-          issue_key: issue_key,
-          base_branch: base_branch,
-          issue_client: issue_client
+          issue_key:,
+          base_branch:,
+          issue_client:
         )
       end
 

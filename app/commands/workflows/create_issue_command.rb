@@ -18,11 +18,11 @@ module Commands
         issue_client = Clients::Issues.build_from_config!
 
         Domain::Workflows.create_issue(
-          title: title,
-          project_key: project_key,
-          issue_type: issue_type,
-          user_name: user_name,
-          issue_client: issue_client
+          title:,
+          project_key:,
+          issue_type:,
+          user_name:,
+          issue_client:
         )
       end
 

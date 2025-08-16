@@ -4,13 +4,13 @@ module Commands
       include Command
 
       self.function = "open-browser-aliases"
-      self.aliases = ["bro"]
+      self.aliases = ["b"]
       self.summary = "Open browser URLs from configured aliases"
 
       def call
         parse_options
 
-        Domain::Open.browser_aliases(alias_names: ARGV)
+        Domain::Open.browser_aliases(ARGV)
       end
 
       private

@@ -1,10 +1,10 @@
 module Commands
   module Workflows
-    class SetupWorkflowCommand
+    class SetupDevflowCommand
       include Command
 
-      self.function = "setup-workflow"
-      self.aliases = ["flow"]
+      self.function = "setup-devflow"
+      self.aliases = ["devflow"]
       self.summary = "Interactive development workflow (issue → branch → notes → PR)"
 
       def call
@@ -13,9 +13,9 @@ module Commands
         issue_client = Clients::Issues.build_from_config!
         git_repo_client = Clients::GitRepositories.build_from_config!
 
-        Domain::Workflows.setup_workflow(
-          issue_client: issue_client,
-          git_repo_client: git_repo_client
+        Domain::Workflows.setup_devflow(
+          issue_client:,
+          git_repo_client:
         )
       end
 
@@ -39,10 +39,10 @@ module Commands
         Log.log opts
         Log.log ''
         Log.log 'Usage Examples:'
-        Log.log "  #{self.class.function}  # Start interactive workflow"
+        Log.log "  #{self.class.function}  # Start interactive dev workflow"
         Log.log "  flow                    # Quick alias"
         Log.log ''
-        Log.log 'Workflow Scenarios:'
+        Log.log 'Dev workflow Scenarios:'
         Log.log ''
         Log.log '  New Feature Development:'
         Log.log '    1. Create new issue → Auto branch → Notes → PR'

@@ -1,6 +1,6 @@
 require_relative "boot"
 
-class ShellScriptGenerator
+class MakeCommandsGenerator
   include Utils
 
   def initialize
@@ -204,4 +204,4 @@ class ShellScriptGenerator
   end
 end
 
-ShellScriptGenerator.new.generate
+MakeCommandsGenerator.new.generate

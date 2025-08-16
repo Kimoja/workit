@@ -5,24 +5,28 @@ module Domain
 
     ### ACTIONS ###
 
-    def setup_git_branch(...)
-      Workflows::SetupGitBranchAction.call(...)
+    def setup_git_branch(**)
+      Workflows::SetupGitBranchAction.call(**)
     end
 
-    def setup_git_branch_from_issue(...)
-      Workflows::SetupGitBranchFromIssueAction.call(...)
+    def setup_git_branch_from_issue(**)
+      Workflows::SetupGitBranchFromIssueAction.call(**)
     end
 
-    def setup_git_pull_request(...)
-      Workflows::SetupGitPullRequestAction.call(...)
+    def setup_git_pull_request(**)
+      Workflows::SetupGitPullRequestAction.call(**)
     end
 
-    def create_issue(...)
-      Workflows::CreateIssueAction.call(...)
+    def create_issue(**)
+      Workflows::CreateIssueAction.call(**)
     end
 
-    def setup_note_from_git_branch(...)
-      Workflows::SetupNoteFromGitBranchAction.call(...)
+    def setup_note_from_git_branch(**)
+      Workflows::SetupNoteFromGitBranchAction.call(**)
+    end
+
+    def setup_devflow(**)
+      Workflows::SetupDevflowAction.call(**)
     end
 
     ### HELPERS ###

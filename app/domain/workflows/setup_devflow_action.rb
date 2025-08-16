@@ -1,6 +1,6 @@
 module Domain
   module Workflows
-    class SetupWorkflowAction
+    class SetupDevflowAction
       include Action
 
       def call

@@ -14,8 +14,8 @@ module Commands
         issue_client = Clients::Issues.build_from_config!
 
         Domain::Workflows.setup_git_pull_request(
-          git_repo_client: git_repo_client,
-          issue_client: issue_client
+          git_repo_client:,
+          issue_client:
         )
       end
 

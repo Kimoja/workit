@@ -12,6 +12,4 @@ begin
 rescue StandardError => e
   Utils::Log.error(e.message || e)
   e.backtrace[0..20].each { |line| Utils::Log.log line }
-ensure
-  Utils::Cache.save
 end

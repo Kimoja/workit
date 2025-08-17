@@ -39,7 +39,7 @@ module Functions
           :user_name,
           'User name is required',
           proc { issue_client.fetch_project_users(project_key).map { _1["name"] }.sort },
-          default: Config.get("@issue_provider", "default_user_name")
+          default: Config.get("@issue_provider", "user_name")
         ) { user_name&.strip&.present? }
 
         # raise

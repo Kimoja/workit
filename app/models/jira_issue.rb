@@ -40,5 +40,9 @@ module Models
     def respond_to_missing?(method_name, include_private = false)
       @raw_data.key?(method_name.to_s) || super
     end
+
+    def to_s
+      "#{key} > #{title}"
+    end
   end
 end

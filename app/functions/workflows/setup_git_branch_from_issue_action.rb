@@ -15,24 +15,23 @@ module Functions
 
       private
 
-      attr_reader(:issue_key, :issue_client, :issue)
+      attr_reader(:issue_key, :issue, :issue_client)
 
       def setup_and_valid_attributes!
         if issue_key.nil? || issue_key.strip.empty?
-          select_for_attribute(attribute, 'Issue key is required', options, default:) do
-            raise 'Issue key is required' unless issue.nil?
+          select_for_attribute(:issue, 'Issue key is required', proc { possible_issues }) do
+            raise 'Issue key is required' if issue.nil?
           end
         elsif issue.nil?
-          select_for_attribute(attribute, 'Issue is required', options, default:) do
-            raise 'Issue is required' unless issue.nil?
+          select_for_attribute(:issue, 'Issue is required', proc { possible_issues }) do
+            raise 'Issue is required' if issue.nil?
           end
         end
       end
 
-      def possible_formated_issues
+      def possible_issues
         issue_client
           .fetch_user_issues(Config.get("@issue_provider", "user_name"))
-          .map { |issue| "#{issue.key} > #{issue.title}" }
       end
 
       def summary

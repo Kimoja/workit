@@ -87,16 +87,6 @@ module Functions
         issue_type
       end
 
-      def add_to_cache(issue)
-        Cache.set(
-          'last_issue_created',
-          value: {
-            'url' => issue.url,
-            'issue_key' => issue.key
-          }
-        )
-      end
-
       def report
         Log.success "Issue created successfully: #{issue.key}"
         Log.pad "URL: #{issue.url}"

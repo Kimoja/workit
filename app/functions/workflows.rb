@@ -1,7 +1,7 @@
-module Operations
+module Functions
   module Workflows
     extend self
-    include Operations
+    include Functions
 
     ### ACTIONS ###
 

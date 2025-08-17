@@ -18,20 +18,6 @@ module Clients
         new(base_url: url, token: Base64.strict_encode64("#{email}:#{token}"))
       end
 
-      def fetch_project(project_key)
-        Log.info "Searching for project '#{project_key}'..."
-
-        project = fetch_projects[project_key]
-
-        if project
-          Log.info "Project '#{project_key}' found"
-          return project
-        end
-
-        Log.warn "Project '#{project_key}' not found"
-        nil
-      end
-
       def fetch_projects
         Log.info "Fetching projects..."
 
@@ -51,13 +37,14 @@ module Clients
 
           obj[project_key] = {
             'board_id' => board['id'],
+            'project_key' => project_key,
             'board_type' => board['type'],
             'board_name' => board['name']
           }
         end
 
         Log.info "#{projects.size} projects found"
-        Cache.set(*cache_keys, value: projects, ttl: 1.week)
+        Cache.set(*cache_keys, value: projects, ttl: 7)
       end
 
       def fetch_issue_types_for_project(project_key)
@@ -72,7 +59,7 @@ module Clients
         end
 
         query = {
-          projectKeys:,
+          projectKeys: project_key,
           expand: "projects.issuetypes"
         }
         project = get("/rest/api/2/issue/createmeta", query:)['projects'].first
@@ -80,7 +67,7 @@ module Clients
         if project
           Log.info "Issue types found for project '#{project_key}'"
           issue_types = project['issuetypes'].map { |type| type['name'] }
-          return Cache.set(*cache_keys, value: issue_types, ttl: 1.week)
+          return Cache.set(*cache_keys, value: issue_types, ttl: 7)
         end
 
         Log.warn "Issue types not found for project '#{project_key}'"
@@ -102,7 +89,7 @@ module Clients
 
         if field
           Log.info "Sprint field found: #{field['id']}"
-          return Cache.set(*cache_keys, value: field['id'], ttl: 1.year)
+          return Cache.set(*cache_keys, value: field['id'], ttl: 365)
         end
 
         Log.warn 'Sprint field not found'
@@ -139,27 +126,29 @@ module Clients
 
         if user
           Log.info "User found: #{user['displayName']}"
-          return Cache.set(*cache_keys, user['displayName'], value: user['accountId'], ttl: 1.year)
+          return add_user_to_cache(user)
         end
 
         Log.warn "User '#{name}' not found"
         nil
       end
 
-      def fetch_project_user_names(project_key)
-        Log.info "Fetching user names for project '#{project_key}'..."
+      def fetch_project_users(project_key)
+        Log.info "Fetching users for project '#{project_key}'..."
 
         cache_keys = ["jira", "projects", project_key, "recent_users"]
         cached_users = Cache.get(*cache_keys)
 
         if cached_users
-          Log.info "User names for project '#{project_key}' found in cache"
+          Log.info "Users for project '#{project_key}' found in cache"
           return cached_users
         end
 
+        Cache.reset(*cache_keys)
+
         query = {
           jql: "project = #{project_key} AND updated >= -60d",
-          fields: 'assignee&maxResults=200"'
+          fields: 'assignee'
         }
         recent_issues = get("/rest/api/2/search", query:)['issues']
 
@@ -167,16 +156,14 @@ module Clients
                 .filter_map { |issue| issue.dig('fields', 'assignee') }
                 .uniq { |assignee| assignee['accountId'] }
 
-        users.each do |user|
-          Cache.set("jira", "users", user['displayName'], value: user['accountId'], ttl: 1.year)
-        end
+        Log.info "Found #{users.size} user for project '#{project_key}'"
 
-        user_names = users
-                     .map { |assignee| assignee['displayName'] }
-                     .sort
+        cached_users = users.map do |user| add_user_to_cache(user) end
 
-        Log.info "Found #{user_names.size} user names for project '#{project_key}'"
-        Cache.set(*cache_keys, value: user_names)
+        Cache.set(*cache_keys, value: cached_users, ttl: 7)
+
+
+        Cache.get(*cache_keys)
       end
 
       def fetch_user_issues(user_name, limit: 20)
@@ -260,6 +247,18 @@ module Clients
 
       def map_issue(raw_data)
         Models::JiraIssue.new(raw_data)
+      end
+
+      def add_user_to_cache(user)
+        user_map = { "id" => user['accountId'], "name" => user['displayName'] }
+
+        Cache.set(
+          "jira",
+          "users",
+          user['displayName'],
+          value: user_map,
+          ttl: 30
+        )
       end
     end
   end

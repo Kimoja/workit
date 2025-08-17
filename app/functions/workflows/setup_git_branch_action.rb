@@ -1,4 +1,4 @@
-module Operations
+module Functions
   module Workflows
     class SetupGitBranchAction
       include Action

@@ -1,4 +1,4 @@
-module Operations
+module Functions
   module Workflows
     class SetupGitBranchFromIssueAction
       include Action
@@ -22,7 +22,7 @@ module Operations
           :issue_key,
           'Issue key is required',
           proc { possible_issue_keys },
-          formatter: proc { |value| value.split(' > ').first }
+          formatter: proc { |value| value.split(' > ').first } # FIXME
         ) { issue_key&.strip&.present? }
       end
 

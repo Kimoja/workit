@@ -14,7 +14,7 @@ module Commands
         base_branch = options[:base_branch]
         issue_client = Clients::Issues.build_from_config!
 
-        Operations::Workflows.setup_git_branch_from_issue(
+        Functions::Workflows.setup_git_branch_from_issue(
           issue_key:,
           base_branch:,
           issue_client:

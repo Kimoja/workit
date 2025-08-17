@@ -1,8 +1,8 @@
-module Operations
+module Functions
   module Workflows
     class CreateIssueAction
       include Action
-      include Operations
+      include Functions
 
       def call
         setup_and_valid_attributes!
@@ -24,7 +24,7 @@ module Operations
         valid_attribute_or_select(
           :project_key,
           'Project key is required',
-          proc { issue_client.fetch_projects.keys.sort },
+          proc { projects.keys.sort },
           default: Config.get("@issue_provider", "default_project_key")
         ) { project_key&.strip&.present? }
 
@@ -38,9 +38,11 @@ module Operations
         valid_attribute_or_select(
           :user_name,
           'User name is required',
-          proc { issue_client.fetch_project_user_names(project_key) },
+          proc { issue_client.fetch_project_users(project_key).map { _1["name"] }.sort },
           default: Config.get("@issue_provider", "default_user_name")
         ) { user_name&.strip&.present? }
+
+        # raise
       end
 
       def summary
@@ -107,13 +109,17 @@ module Operations
 
       ### STATE ###
 
+      memo def projects
+        issue_client.fetch_projects
+      end
+
       memo def project
-        project = issue_client.fetch_project(project_key)
+        project = projects[project_key]
         return project if project
 
         Log.error "Project '#{project_key}' not found"
         Log.pad 'Available projects:'
-        issue_client.fetch_projects.each { |key, proj| Log.pad "- #{key} (#{proj['board_type']})" }
+        projects.each { |key, proj| Log.pad "- #{key} (#{proj['board_type']})" }
 
         raise "Project '#{project_key}' not found"
       end
@@ -169,6 +175,12 @@ module Operations
           Log.warn "Error searching for active sprint: #{e.message}"
           Log.pad 'Issue will be created in backlog'
           nil
+        end
+      end
+
+      def project_user_names
+        issue_client.fetch_project_users(project_key).map do |user| 
+          user["name"]
         end
       end
     end

@@ -10,7 +10,7 @@ module Commands
       def call
         parse_options
 
-        Operations::System.open_folder_aliases(ARGV)
+        Functions::System.open_folder_aliases(ARGV)
       end
 
       private

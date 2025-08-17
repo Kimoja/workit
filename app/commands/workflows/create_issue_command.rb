@@ -17,7 +17,7 @@ module Commands
 
         issue_client = Clients::Issues.build_from_config!
 
-        Operations::Workflows.create_issue(
+        Functions::Workflows.create_issue(
           title:,
           project_key:,
           issue_type:,

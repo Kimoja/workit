@@ -1,6 +1,6 @@
-module Operations
+module Functions
   module System
-    class OpenBrowserAliasesAction
+    class OpenFolderAliasesAction
       include Action
 
       attr_reader :alias_names
@@ -14,51 +14,47 @@ module Operations
       private
 
       def summary
-        Log.start "Opening browser aliases: #{alias_names.join(', ')}"
+        Log.start "Opening folder aliases: #{alias_names.join(', ')}"
       end
 
       def resolve_and_open_aliases
         alias_names.each do |alias_name|
           Log.info "Processing alias: #{alias_name}"
-          urls = resolve_alias(alias_name)
-          open_urls(urls)
+          paths = resolve_alias(alias_name)
+          open_folders(paths)
         end
       end
 
       def resolve_alias(alias_name, visited = Set.new)
-        # Éviter les références circulaires
         if visited.include?(alias_name)
           Log.error "Circular reference detected for alias: #{alias_name}"
           return []
         end
         visited.add(alias_name)
 
-        alias_value = Config.get('browser_aliases', alias_name)
+        alias_value = Config.get('folder_aliases', alias_name)
 
         unless alias_value
-          Log.error "Browser alias '#{alias_name}' not found in config"
+          Log.error "Folder alias '#{alias_name}' not found in config"
           return []
         end
 
         case alias_value
         when String
           if alias_value.start_with?('@')
-            # C'est une référence vers un autre alias
-            referenced_alias = alias_value[1..]
+            referenced_alias = alias_value[1..-1]
             Log.info "Resolving reference: #{alias_name} -> #{referenced_alias}"
             resolve_alias(referenced_alias, visited)
           else
-            # C'est une URL directe
-            [alias_value]
+            [expand_path(alias_value)]
           end
         when Array
-          # C'est un tableau d'URLs
           alias_value.flat_map do |item|
             if item.start_with?('@')
-              referenced_alias = item[1..]
+              referenced_alias = item[1..-1]
               resolve_alias(referenced_alias, visited)
             else
-              [item]
+              [expand_path(item)]
             end
           end
         else
@@ -67,17 +63,25 @@ module Operations
         end
       end
 
-      def open_urls(urls)
-        return if urls.empty?
+      def expand_path(path)
+        File.expand_path(path)
+      end
 
-        urls.each do |url|
-          Log.info "Opening: #{url}"
-          Utils::System.open_browser(url)
+      def open_folders(paths)
+        return if paths.empty?
+
+        paths.each do |path|
+          if File.directory?(path)
+            Log.info "Opening folder: #{path}"
+            Utils::System.open_folder(path)
+          else
+            Log.warn "Path does not exist or is not a directory: #{path}"
+          end
         end
       end
 
       def report
-        Log.success "Browser aliases opened successfully"
+        Log.success "Folder aliases opened successfully"
       end
     end
   end

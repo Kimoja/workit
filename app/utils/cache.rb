@@ -17,19 +17,27 @@ module Utils
     end
 
     def get(*keys, default: nil)
+      return default
       return default if expired_key_cleaned?(*keys)
 
       result = cache.dig(*keys)
       result.nil? ? default : result
     end
 
-    def set(*keys, value:, ttl: 1.week)
+    def set(*keys, value:, ttl: 7)
       last_key = keys.pop
       parent = keys.empty? ? cache : keys.reduce(cache) { |h, k| h[k] ||= {} }
       parent[last_key] = value
-      parent["_#{last_key}_expire"] = ttl.from_now.to_i
+      parent["_#{last_key}_expire"] = Time.now + (ttl * 24 * 3600)
 
       value
+    end
+
+    def reset(*keys)
+      last_key = keys.pop
+      parent = keys.empty? ? cache : keys.reduce(cache) { |h, k| h[k] ||= {} }
+      parent[last_key] = {}
+      parent.delete("_#{last_key}_expire")
     end
 
     def save
@@ -52,7 +60,7 @@ module Utils
       end
 
       return false unless expire_time
-      return false if Time.now.to_i < expire_time
+      return false if Time.now.to_i < DateTime.parse(expire_time).to_time.to_i
 
       parent.delete(expire_key)
       parent.delete(last_key)
